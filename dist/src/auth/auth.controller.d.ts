@@ -9,11 +9,11 @@ export declare class AuthController {
         customer: {
             id: string;
             name: string;
+            created_at: Date;
             zalo_id: string;
             phone: string | null;
             email: string | null;
             avatar_text: string | null;
-            created_at: Date;
         };
     }>;
     adminLogin(dto: AdminLoginDto): Promise<{

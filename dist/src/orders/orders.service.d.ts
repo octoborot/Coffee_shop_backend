@@ -13,25 +13,27 @@ export declare class OrdersService {
             customer: {
                 id: string;
                 name: string;
+                created_at: Date;
                 zalo_id: string;
                 phone: string | null;
                 email: string | null;
                 avatar_text: string | null;
-                created_at: Date;
             } | null;
             items: {
                 id: string;
                 name: string;
+                price: import("@prisma/client-runtime-utils").Decimal;
+                price_vnd: number;
                 options: import("@prisma/client/runtime/client").JsonValue | null;
                 order_id: string;
                 product_id: string | null;
                 quantity: number;
-                price: import("@prisma/client-runtime-utils").Decimal;
-                price_vnd: number;
             }[];
         } & {
             id: string;
+            status: import("@prisma/client").$Enums.OrderStatus;
             created_at: Date;
+            updated_at: Date;
             type: import("@prisma/client").$Enums.OrderType;
             total_price_vnd: number;
             payment_status: import("@prisma/client").$Enums.PaymentStatus;
@@ -46,27 +48,27 @@ export declare class OrdersService {
             handled_by_admin_id: string | null;
             customer_name: string | null;
             customer_phone: string | null;
-            status: import("@prisma/client").$Enums.OrderStatus;
             payment_method: import("@prisma/client").$Enums.PaymentMethod;
             note: string | null;
             address: string | null;
-            updated_at: Date;
         };
     }>;
     getOrderHistory(customerId: string): import("@prisma/client").Prisma.PrismaPromise<({
         items: {
             id: string;
             name: string;
+            price: import("@prisma/client-runtime-utils").Decimal;
+            price_vnd: number;
             options: import("@prisma/client/runtime/client").JsonValue | null;
             order_id: string;
             product_id: string | null;
             quantity: number;
-            price: import("@prisma/client-runtime-utils").Decimal;
-            price_vnd: number;
         }[];
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.OrderStatus;
         created_at: Date;
+        updated_at: Date;
         type: import("@prisma/client").$Enums.OrderType;
         total_price_vnd: number;
         payment_status: import("@prisma/client").$Enums.PaymentStatus;
@@ -81,35 +83,35 @@ export declare class OrdersService {
         handled_by_admin_id: string | null;
         customer_name: string | null;
         customer_phone: string | null;
-        status: import("@prisma/client").$Enums.OrderStatus;
         payment_method: import("@prisma/client").$Enums.PaymentMethod;
         note: string | null;
         address: string | null;
-        updated_at: Date;
     })[]>;
     getOrderById(id: string): Promise<{
         customer: {
             id: string;
             name: string;
+            created_at: Date;
             zalo_id: string;
             phone: string | null;
             email: string | null;
             avatar_text: string | null;
-            created_at: Date;
         } | null;
         items: {
             id: string;
             name: string;
+            price: import("@prisma/client-runtime-utils").Decimal;
+            price_vnd: number;
             options: import("@prisma/client/runtime/client").JsonValue | null;
             order_id: string;
             product_id: string | null;
             quantity: number;
-            price: import("@prisma/client-runtime-utils").Decimal;
-            price_vnd: number;
         }[];
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.OrderStatus;
         created_at: Date;
+        updated_at: Date;
         type: import("@prisma/client").$Enums.OrderType;
         total_price_vnd: number;
         payment_status: import("@prisma/client").$Enums.PaymentStatus;
@@ -124,11 +126,9 @@ export declare class OrdersService {
         handled_by_admin_id: string | null;
         customer_name: string | null;
         customer_phone: string | null;
-        status: import("@prisma/client").$Enums.OrderStatus;
         payment_method: import("@prisma/client").$Enums.PaymentMethod;
         note: string | null;
         address: string | null;
-        updated_at: Date;
     }>;
     getAdminOrders(status?: OrderStatus): import("@prisma/client").Prisma.PrismaPromise<({
         customer: {
@@ -139,16 +139,18 @@ export declare class OrdersService {
         items: {
             id: string;
             name: string;
+            price: import("@prisma/client-runtime-utils").Decimal;
+            price_vnd: number;
             options: import("@prisma/client/runtime/client").JsonValue | null;
             order_id: string;
             product_id: string | null;
             quantity: number;
-            price: import("@prisma/client-runtime-utils").Decimal;
-            price_vnd: number;
         }[];
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.OrderStatus;
         created_at: Date;
+        updated_at: Date;
         type: import("@prisma/client").$Enums.OrderType;
         total_price_vnd: number;
         payment_status: import("@prisma/client").$Enums.PaymentStatus;
@@ -163,15 +165,15 @@ export declare class OrdersService {
         handled_by_admin_id: string | null;
         customer_name: string | null;
         customer_phone: string | null;
-        status: import("@prisma/client").$Enums.OrderStatus;
         payment_method: import("@prisma/client").$Enums.PaymentMethod;
         note: string | null;
         address: string | null;
-        updated_at: Date;
     })[]>;
     updateOrderStatus(id: string, dto: UpdateOrderStatusDto): import("@prisma/client").Prisma.Prisma__OrderClient<{
         id: string;
+        status: import("@prisma/client").$Enums.OrderStatus;
         created_at: Date;
+        updated_at: Date;
         type: import("@prisma/client").$Enums.OrderType;
         total_price_vnd: number;
         payment_status: import("@prisma/client").$Enums.PaymentStatus;
@@ -186,10 +188,8 @@ export declare class OrdersService {
         handled_by_admin_id: string | null;
         customer_name: string | null;
         customer_phone: string | null;
-        status: import("@prisma/client").$Enums.OrderStatus;
         payment_method: import("@prisma/client").$Enums.PaymentMethod;
         note: string | null;
         address: string | null;
-        updated_at: Date;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
 }

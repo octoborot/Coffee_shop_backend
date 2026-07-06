@@ -5,11 +5,11 @@ export declare class AuthRepository {
     findCustomerByZaloId(zaloId: string): import("@prisma/client").Prisma.Prisma__CustomerClient<{
         id: string;
         name: string;
+        created_at: Date;
         zalo_id: string;
         phone: string | null;
         email: string | null;
         avatar_text: string | null;
-        created_at: Date;
     } | null, null, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     createCustomer(data: {
         zalo_id: string;
@@ -19,11 +19,11 @@ export declare class AuthRepository {
     }): import("@prisma/client").Prisma.Prisma__CustomerClient<{
         id: string;
         name: string;
+        created_at: Date;
         zalo_id: string;
         phone: string | null;
         email: string | null;
         avatar_text: string | null;
-        created_at: Date;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     findAdminByUsername(username: string): import("@prisma/client").Prisma.Prisma__AdminUserClient<{
         id: string;

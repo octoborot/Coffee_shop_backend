@@ -17,16 +17,18 @@ export declare class CustomerController {
             items: {
                 id: string;
                 name: string;
+                price: import("@prisma/client-runtime-utils").Decimal;
+                price_vnd: number;
                 options: import("@prisma/client/runtime/client").JsonValue | null;
                 order_id: string;
                 product_id: string | null;
                 quantity: number;
-                price: import("@prisma/client-runtime-utils").Decimal;
-                price_vnd: number;
             }[];
         } & {
             id: string;
+            status: import("@prisma/client").$Enums.OrderStatus;
             created_at: Date;
+            updated_at: Date;
             type: import("@prisma/client").$Enums.OrderType;
             total_price_vnd: number;
             payment_status: import("@prisma/client").$Enums.PaymentStatus;
@@ -41,21 +43,19 @@ export declare class CustomerController {
             handled_by_admin_id: string | null;
             customer_name: string | null;
             customer_phone: string | null;
-            status: import("@prisma/client").$Enums.OrderStatus;
             payment_method: import("@prisma/client").$Enums.PaymentMethod;
             note: string | null;
             address: string | null;
-            updated_at: Date;
         })[];
     }>;
     updateProfile(req: any, dto: UpdateProfileDto): Promise<{
         id: string;
         name: string;
+        created_at: Date;
         zalo_id: string;
         phone: string | null;
         email: string | null;
         avatar_text: string | null;
-        created_at: Date;
     }>;
 }
 export {};
