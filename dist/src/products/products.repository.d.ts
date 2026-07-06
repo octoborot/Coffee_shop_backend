@@ -1,8 +1,8 @@
-import { ProductsRepository } from './products.repository';
+import { PrismaService } from '../prisma/prisma.service';
 import { ProductCategory, ProductStatus } from '@prisma/client';
-export declare class ProductsService {
-    private readonly productsRepository;
-    constructor(productsRepository: ProductsRepository);
+export declare class ProductsRepository {
+    private readonly prisma;
+    constructor(prisma: PrismaService);
     findAll(filters?: {
         category?: ProductCategory;
         status?: ProductStatus;
@@ -19,7 +19,7 @@ export declare class ProductsService {
         created_at: Date;
         updated_at: Date;
     }[]>;
-    findOne(id: string): Promise<{
+    findById(id: string): import("@prisma/client").Prisma.Prisma__ProductClient<{
         id: string;
         name: string;
         subname: string | null;
@@ -31,5 +31,5 @@ export declare class ProductsService {
         details: string | null;
         created_at: Date;
         updated_at: Date;
-    }>;
+    } | null, null, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
 }

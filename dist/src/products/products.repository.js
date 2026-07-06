@@ -9,28 +9,29 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProductsService = void 0;
+exports.ProductsRepository = void 0;
 const common_1 = require("@nestjs/common");
-const products_repository_1 = require("./products.repository");
-let ProductsService = class ProductsService {
-    productsRepository;
-    constructor(productsRepository) {
-        this.productsRepository = productsRepository;
+const prisma_service_1 = require("../prisma/prisma.service");
+let ProductsRepository = class ProductsRepository {
+    prisma;
+    constructor(prisma) {
+        this.prisma = prisma;
     }
     findAll(filters) {
-        return this.productsRepository.findAll(filters);
+        return this.prisma.product.findMany({
+            where: filters,
+            orderBy: { created_at: 'desc' },
+        });
     }
-    async findOne(id) {
-        const product = await this.productsRepository.findById(id);
-        if (!product) {
-            throw new common_1.NotFoundException(`Sản phẩm với ID ${id} không tồn tại`);
-        }
-        return product;
+    findById(id) {
+        return this.prisma.product.findUnique({
+            where: { id },
+        });
     }
 };
-exports.ProductsService = ProductsService;
-exports.ProductsService = ProductsService = __decorate([
+exports.ProductsRepository = ProductsRepository;
+exports.ProductsRepository = ProductsRepository = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [products_repository_1.ProductsRepository])
-], ProductsService);
-//# sourceMappingURL=products.service.js.map
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+], ProductsRepository);
+//# sourceMappingURL=products.repository.js.map
