@@ -6,37 +6,31 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { ProductCategory, ProductStatus } from '@prisma/client';
 
-@Controller('products')
+@ApiTags('Products')
+@Controller('api/v1/products') // Đổi đường dẫn cho đồng bộ với API khác
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  @Post()
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
-  }
-
   @Get()
-  findAll() {
-    return this.productsService.findAll();
+  @ApiOperation({ summary: 'Lấy danh sách tất cả sản phẩm' })
+  @ApiQuery({ name: 'category', enum: ProductCategory, required: false })
+  @ApiQuery({ name: 'status', enum: ProductStatus, required: false })
+  findAll(
+    @Query('category') category?: ProductCategory,
+    @Query('status') status?: ProductStatus,
+  ) {
+    return this.productsService.findAll({ category, status });
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Lấy chi tiết một sản phẩm' })
   findOne(@Param('id') id: string) {
-    return this.productsService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productsService.update(+id, updateProductDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.productsService.remove(+id);
+    return this.productsService.findOne(id);
   }
 }
