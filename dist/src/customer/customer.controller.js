@@ -50,7 +50,9 @@ let CustomerController = class CustomerController {
 exports.CustomerController = CustomerController;
 __decorate([
     (0, common_1.Get)('profile'),
-    (0, swagger_1.ApiOperation)({ summary: 'Lấy thông tin hồ sơ cá nhân, hạng thành viên, điểm tích lũy' }),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Lấy thông tin hồ sơ cá nhân, hạng thành viên, điểm tích lũy',
+    }),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

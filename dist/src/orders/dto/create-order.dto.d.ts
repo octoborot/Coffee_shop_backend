@@ -1,4 +1,4 @@
-import { OrderType } from '@prisma/client';
+import { OrderType, PaymentMethod } from '@prisma/client';
 export declare class OrderItemDto {
     product_id: string;
     quantity: number;
@@ -9,7 +9,7 @@ export declare class CreateOrderDto {
     type: OrderType;
     address?: string;
     note?: string;
-    payment_method: 'cash' | 'zalopay';
+    payment_method: PaymentMethod;
     customer_name?: string;
     customer_phone?: string;
 }

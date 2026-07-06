@@ -1,4 +1,11 @@
-import { Controller, Get, Patch, Body, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Body,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { IsOptional, IsString, IsEmail } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -25,7 +32,9 @@ export class CustomerController {
   constructor(private readonly customerService: CustomerService) {}
 
   @Get('profile')
-  @ApiOperation({ summary: 'Lấy thông tin hồ sơ cá nhân, hạng thành viên, điểm tích lũy' })
+  @ApiOperation({
+    summary: 'Lấy thông tin hồ sơ cá nhân, hạng thành viên, điểm tích lũy',
+  })
   getProfile(@Request() req) {
     return this.customerService.getProfile(req.user.id);
   }

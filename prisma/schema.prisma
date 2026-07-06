@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "library"
 }
 
@@ -10,12 +10,6 @@ datasource db {
 enum AdminRole {
   ADMIN
   STAFF
-}
-
-enum MembershipLevel {
-  Diamond
-  Gold
-  Silver
 }
 
 enum ProductCategory {
@@ -43,10 +37,21 @@ enum OrderStatus {
   Cancelled
 }
 
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+}
+
 enum PaymentStatus {
   PAID
   UNPAID
   REFUNDED
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED_AMOUNT
+  BUY_ONE_GET_ONE
 }
 
 enum NotificationType {
@@ -61,63 +66,138 @@ model AdminUser {
   password_hash String    @db.VarChar
   role          AdminRole
 
+  createdProducts      Product[]      @relation("ProductCreatedBy")
+  updatedProducts      Product[]      @relation("ProductUpdatedBy")
+  handledOrders        Order[]        @relation("OrderHandledBy")
+  createdProductTags   ProductTag[]   @relation("ProductTagCreatedBy")
+  updatedProductTags   ProductTag[]   @relation("ProductTagUpdatedBy")
+  createdVouchers      Voucher[]      @relation("VoucherCreatedBy")
+  updatedVouchers      Voucher[]      @relation("VoucherUpdatedBy")
+  createdNotifications Notification[] @relation("NotificationCreatedBy")
+
   @@map("admin_users")
 }
 
 model Customer {
-  id             String           @id @default(uuid()) @db.Uuid
-  zalo_id        String           @unique @db.VarChar
-  name           String           @db.VarChar
-  phone          String?          @unique @db.VarChar
-  email          String?          @unique @db.VarChar
-  avatar_text    String?          @db.VarChar
-  member_card_id String?          @db.VarChar
-  membership     MembershipLevel?
-  points         Int              @default(0)
-  last_purchase  DateTime?        @db.Timestamp()
-  created_at     DateTime         @default(now()) @db.Timestamp()
+  id          String   @id @default(uuid()) @db.Uuid
+  zalo_id     String   @unique @db.VarChar
+  name        String   @db.VarChar
+  phone       String?  @unique @db.VarChar
+  email       String?  @unique @db.VarChar
+  avatar_text String?  @db.VarChar
+  created_at  DateTime @default(now()) @db.Timestamp()
 
+  addresses     CustomerAddress[]
   orders        Order[]
   notifications Notification[]
 
   @@map("customers")
 }
 
-model Product {
-  id         String          @id @default(uuid()) @db.Uuid
-  name       String          @db.VarChar
-  subname    String?         @db.VarChar
-  category   ProductCategory
-  price      Decimal         @db.Decimal
-  price_vnd  Int
-  image      String?         @db.Text
-  status     ProductStatus   @default(Available)
-  details    String?         @db.Text
-  created_at DateTime        @default(now()) @db.Timestamp()
-  updated_at DateTime        @updatedAt @db.Timestamp()
+model CustomerAddress {
+  id          String   @id @default(uuid()) @db.Uuid
+  customer_id String   @db.Uuid
+  label       String?  @db.VarChar
+  receiver    String?  @db.VarChar
+  phone       String?  @db.VarChar
+  address     String   @db.Text
+  is_default  Boolean  @default(false)
+  created_at  DateTime @default(now()) @db.Timestamp()
+  updated_at  DateTime @updatedAt @db.Timestamp()
 
+  customer Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  orders   Order[]
+
+  @@map("customer_addresses")
+}
+
+model StoreLocation {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @db.VarChar
+  address    String   @db.Text
+  phone      String?  @db.VarChar
+  latitude   Decimal? @db.Decimal(10, 7)
+  longitude  Decimal? @db.Decimal(10, 7)
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now()) @db.Timestamp()
+  updated_at DateTime @updatedAt @db.Timestamp()
+
+  orders Order[]
+
+  @@map("store_locations")
+}
+
+model Product {
+  id                  String          @id @default(uuid()) @db.Uuid
+  created_by_admin_id String?         @db.Uuid
+  updated_by_admin_id String?         @db.Uuid
+  name                String          @db.VarChar
+  subname             String?         @db.VarChar
+  category            ProductCategory
+  price               Decimal         @db.Decimal
+  price_vnd           Int
+  rating              Decimal?        @db.Decimal(2, 1)
+  image               String?         @db.Text
+  status              ProductStatus   @default(Available)
+  details             String?         @db.Text
+  description         String?         @db.Text
+  created_at          DateTime        @default(now()) @db.Timestamp()
+  updated_at          DateTime        @updatedAt @db.Timestamp()
+
+  created_by AdminUser?   @relation("ProductCreatedBy", fields: [created_by_admin_id], references: [id])
+  updated_by AdminUser?   @relation("ProductUpdatedBy", fields: [updated_by_admin_id], references: [id])
   orderItems OrderItem[]
+  tags       ProductTag[]
 
   @@map("products")
 }
 
-model Order {
-  id              String        @id @db.VarChar // e.g., #BB-2094
-  customer_id     String?       @db.Uuid
-  customer_name   String?       @db.VarChar
-  customer_phone  String?       @db.VarChar
-  type            OrderType
-  status          OrderStatus   @default(New)
-  payment_status  PaymentStatus @default(UNPAID)
-  total_price     Decimal       @db.Decimal
-  total_price_vnd Int
-  note            String?       @db.Text
-  address         String?       @db.Text
-  created_at      DateTime      @default(now()) @db.Timestamp()
-  updated_at      DateTime      @updatedAt @db.Timestamp()
+model ProductTag {
+  id                  String   @id @default(uuid()) @db.Uuid
+  product_id          String   @db.Uuid
+  created_by_admin_id String?  @db.Uuid
+  updated_by_admin_id String?  @db.Uuid
+  name                String   @db.VarChar
+  created_at          DateTime @default(now()) @db.Timestamp()
+  updated_at          DateTime @updatedAt @db.Timestamp()
 
-  customer Customer?   @relation(fields: [customer_id], references: [id])
-  items    OrderItem[]
+  product    Product    @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  created_by AdminUser? @relation("ProductTagCreatedBy", fields: [created_by_admin_id], references: [id])
+  updated_by AdminUser? @relation("ProductTagUpdatedBy", fields: [updated_by_admin_id], references: [id])
+
+  @@unique([product_id, name])
+  @@map("product_tags")
+}
+
+model Order {
+  id                  String        @id @db.VarChar // e.g., #BB-2094
+  customer_id         String?       @db.Uuid
+  customer_address_id String?       @db.Uuid
+  store_location_id   String?       @db.Uuid
+  voucher_id          String?       @db.Uuid
+  handled_by_admin_id String?       @db.Uuid
+  customer_name       String?       @db.VarChar
+  customer_phone      String?       @db.VarChar
+  type                OrderType
+  status              OrderStatus   @default(New)
+  payment_method      PaymentMethod @default(CASH)
+  payment_status      PaymentStatus @default(UNPAID)
+  subtotal_vnd        Int           @default(0)
+  discount_vnd        Int           @default(0)
+  shipping_fee_vnd    Int           @default(0)
+  total_price         Decimal       @db.Decimal
+  total_price_vnd     Int
+  note                String?       @db.Text
+  address             String?       @db.Text
+  created_at          DateTime      @default(now()) @db.Timestamp()
+  updated_at          DateTime      @updatedAt @db.Timestamp()
+
+  customer         Customer?        @relation(fields: [customer_id], references: [id])
+  customer_address CustomerAddress? @relation(fields: [customer_address_id], references: [id])
+  store_location   StoreLocation?   @relation(fields: [store_location_id], references: [id])
+  voucher          Voucher?         @relation(fields: [voucher_id], references: [id])
+  handled_by       AdminUser?       @relation("OrderHandledBy", fields: [handled_by_admin_id], references: [id])
+  items            OrderItem[]
 
   @@map("orders")
 }
@@ -138,38 +218,47 @@ model OrderItem {
   @@map("order_items")
 }
 
-model BloomRule {
-  id          String @id @default(uuid()) @db.Uuid
-  name        String @db.VarChar
-  description String @db.Text
-  icon        String @db.VarChar
-  points      String @db.VarChar
-  color       String @db.VarChar
+model Voucher {
+  id                    String            @id @default(uuid()) @db.Uuid
+  created_by_admin_id   String?           @db.Uuid
+  updated_by_admin_id   String?           @db.Uuid
+  code                  String            @unique @db.VarChar
+  title                 String            @db.VarChar
+  description           String?           @db.Text
+  image                 String?           @db.Text
+  discount_type         DiscountType
+  discount_value        Int               @default(0)
+  min_order_vnd         Int               @default(0)
+  max_discount_vnd      Int?
+  applicable_categories ProductCategory[]
+  starts_at             DateTime?         @db.Timestamp()
+  ends_at               DateTime?         @db.Timestamp()
+  usage_limit           Int?
+  used_count            Int               @default(0)
+  is_active             Boolean           @default(true)
+  created_at            DateTime          @default(now()) @db.Timestamp()
+  updated_at            DateTime          @updatedAt @db.Timestamp()
 
-  @@map("bloom_rules")
-}
+  created_by AdminUser? @relation("VoucherCreatedBy", fields: [created_by_admin_id], references: [id])
+  updated_by AdminUser? @relation("VoucherUpdatedBy", fields: [updated_by_admin_id], references: [id])
+  orders     Order[]
 
-model Banner {
-  id        String  @id @default(uuid()) @db.Uuid
-  tag       String  @db.VarChar
-  title     String  @db.VarChar
-  image     String  @db.Text
-  is_active Boolean @default(true)
-
-  @@map("banners")
+  @@map("vouchers")
 }
 
 model Notification {
-  id          String           @id @default(uuid()) @db.Uuid
-  customer_id String?          @db.Uuid
-  title       String           @db.VarChar
-  description String           @db.Text
-  type        NotificationType
-  image       String?          @db.Text
-  is_read     Boolean          @default(false)
-  created_at  DateTime         @default(now()) @db.Timestamp()
+  id                  String           @id @default(uuid()) @db.Uuid
+  customer_id         String?          @db.Uuid
+  created_by_admin_id String?          @db.Uuid
+  title               String           @db.VarChar
+  description         String           @db.Text
+  type                NotificationType
+  image               String?          @db.Text
+  is_read             Boolean          @default(false)
+  created_at          DateTime         @default(now()) @db.Timestamp()
 
-  customer Customer? @relation(fields: [customer_id], references: [id])
+  customer   Customer?  @relation(fields: [customer_id], references: [id])
+  created_by AdminUser? @relation("NotificationCreatedBy", fields: [created_by_admin_id], references: [id])
 
   @@map("notifications")
 }

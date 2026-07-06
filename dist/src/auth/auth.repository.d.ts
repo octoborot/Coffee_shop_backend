@@ -9,10 +9,6 @@ export declare class AuthRepository {
         phone: string | null;
         email: string | null;
         avatar_text: string | null;
-        member_card_id: string | null;
-        membership: import("@prisma/client").$Enums.MembershipLevel | null;
-        points: number;
-        last_purchase: Date | null;
         created_at: Date;
     } | null, null, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     createCustomer(data: {
@@ -27,10 +23,6 @@ export declare class AuthRepository {
         phone: string | null;
         email: string | null;
         avatar_text: string | null;
-        member_card_id: string | null;
-        membership: import("@prisma/client").$Enums.MembershipLevel | null;
-        points: number;
-        last_purchase: Date | null;
         created_at: Date;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     findAdminByUsername(username: string): import("@prisma/client").Prisma.Prisma__AdminUserClient<{

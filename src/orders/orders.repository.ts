@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { OrderStatus, OrderType, PaymentStatus } from '@prisma/client';
+import { OrderStatus, OrderType, PaymentMethod, PaymentStatus } from '@prisma/client';
 
 @Injectable()
 export class OrdersRepository {
@@ -21,6 +21,10 @@ export class OrdersRepository {
     customer_name?: string;
     customer_phone?: string;
     type: OrderType;
+    payment_method: PaymentMethod;
+    subtotal_vnd: number;
+    discount_vnd?: number;
+    shipping_fee_vnd?: number;
     total_price: number;
     total_price_vnd: number;
     payment_status: PaymentStatus;
@@ -43,6 +47,10 @@ export class OrdersRepository {
           customer_name: data.customer_name,
           customer_phone: data.customer_phone,
           type: data.type,
+          payment_method: data.payment_method,
+          subtotal_vnd: data.subtotal_vnd,
+          discount_vnd: data.discount_vnd ?? 0,
+          shipping_fee_vnd: data.shipping_fee_vnd ?? 0,
           total_price: data.total_price,
           total_price_vnd: data.total_price_vnd,
           payment_status: data.payment_status,
@@ -62,17 +70,6 @@ export class OrdersRepository {
         include: { items: true, customer: true },
       });
       return order;
-    });
-  }
-
-  // ─── Cộng điểm và cập nhật last_purchase ────────────────────────────────────
-  addPointsToCustomer(customerId: string, points: number) {
-    return this.prisma.customer.update({
-      where: { id: customerId },
-      data: {
-        points: { increment: points },
-        last_purchase: new Date(),
-      },
     });
   }
 
@@ -100,7 +97,7 @@ export class OrdersRepository {
       include: {
         items: true,
         customer: {
-          select: { id: true, name: true, phone: true, membership: true },
+          select: { id: true, name: true, phone: true },
         },
       },
       orderBy: { created_at: 'desc' },

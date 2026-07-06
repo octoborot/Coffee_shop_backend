@@ -33,7 +33,9 @@ __decorate([
     __metadata("design:type", Number)
 ], OrderItemDto.prototype, "quantity", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: { size: 'M', sweetness: '50%', ice: '100%' } }),
+    (0, swagger_1.ApiPropertyOptional)({
+        example: { size: 'M', sweetness: '50%', ice: '100%' },
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsObject)(),
     __metadata("design:type", Object)
@@ -61,7 +63,9 @@ __decorate([
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "type", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Địa chỉ giao hàng (bắt buộc nếu type = Delivery)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Địa chỉ giao hàng (bắt buộc nếu type = Delivery)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
@@ -73,12 +77,14 @@ __decorate([
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "note", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ enum: ['cash', 'zalopay'], default: 'cash' }),
-    (0, class_validator_1.IsEnum)(['cash', 'zalopay']),
+    (0, swagger_1.ApiProperty)({ enum: client_1.PaymentMethod, default: client_1.PaymentMethod.CASH }),
+    (0, class_validator_1.IsEnum)(client_1.PaymentMethod),
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "payment_method", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'Tên khách hàng (dành cho đặt hàng không đăng nhập)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'Tên khách hàng (dành cho đặt hàng không đăng nhập)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

@@ -13,10 +13,6 @@ export declare class AuthController {
             phone: string | null;
             email: string | null;
             avatar_text: string | null;
-            member_card_id: string | null;
-            membership: import("@prisma/client").$Enums.MembershipLevel | null;
-            points: number;
-            last_purchase: Date | null;
             created_at: Date;
         };
     }>;

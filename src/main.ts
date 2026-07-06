@@ -12,9 +12,9 @@ async function bootstrap() {
   // Tự động validate tất cả DTO bằng class-validator
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,      // Bỏ các field không khai báo trong DTO
+      whitelist: true, // Bỏ các field không khai báo trong DTO
       forbidNonWhitelisted: true, // Trả lỗi nếu FE gửi field lạ
-      transform: true,      // Tự động chuyển đổi kiểu dữ liệu
+      transform: true, // Tự động chuyển đổi kiểu dữ liệu
     }),
   );
 

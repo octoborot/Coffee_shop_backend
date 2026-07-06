@@ -32,6 +32,10 @@ let OrdersRepository = class OrdersRepository {
                     customer_name: data.customer_name,
                     customer_phone: data.customer_phone,
                     type: data.type,
+                    payment_method: data.payment_method,
+                    subtotal_vnd: data.subtotal_vnd,
+                    discount_vnd: data.discount_vnd ?? 0,
+                    shipping_fee_vnd: data.shipping_fee_vnd ?? 0,
                     total_price: data.total_price,
                     total_price_vnd: data.total_price_vnd,
                     payment_status: data.payment_status,
@@ -53,15 +57,6 @@ let OrdersRepository = class OrdersRepository {
             return order;
         });
     }
-    addPointsToCustomer(customerId, points) {
-        return this.prisma.customer.update({
-            where: { id: customerId },
-            data: {
-                points: { increment: points },
-                last_purchase: new Date(),
-            },
-        });
-    }
     findByCustomerId(customerId) {
         return this.prisma.order.findMany({
             where: { customer_id: customerId },
@@ -81,7 +76,7 @@ let OrdersRepository = class OrdersRepository {
             include: {
                 items: true,
                 customer: {
-                    select: { id: true, name: true, phone: true, membership: true },
+                    select: { id: true, name: true, phone: true },
                 },
             },
             orderBy: { created_at: 'desc' },

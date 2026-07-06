@@ -3,9 +3,6 @@ import {
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
-import * as crypto from 'crypto';
 import { OrderStatus } from '@prisma/client';
 import { OrdersRepository } from './orders.repository';
 import { OrdersGateway } from '../gateway/orders.gateway';
@@ -17,18 +14,12 @@ export class OrdersService {
   constructor(
     private readonly ordersRepository: OrdersRepository,
     private readonly ordersGateway: OrdersGateway,
-    private readonly configService: ConfigService,
   ) {}
 
   // ─── Tạo mã đơn hàng ngẫu nhiên: #BB-XXXX ──────────────────────────────────
   private generateOrderId(): string {
     const num = Math.floor(1000 + Math.random() * 9000);
     return `#BB-${num}`;
-  }
-
-  // ─── Tính điểm thưởng (1 điểm / 10.000 VNĐ) ────────────────────────────────
-  private calculatePoints(totalVnd: number): number {
-    return Math.floor(totalVnd / 10000);
   }
 
   // ─── Tạo đơn hàng mới ────────────────────────────────────────────────────────
@@ -49,7 +40,9 @@ export class OrdersService {
     const itemsData = dto.items.map((item) => {
       const product = productMap.get(item.product_id);
       if (!product) {
-        throw new BadRequestException(`Sản phẩm ${item.product_id} không tồn tại.`);
+        throw new BadRequestException(
+          `Sản phẩm ${item.product_id} không tồn tại.`,
+        );
       }
       const itemTotalVnd = product.price_vnd * item.quantity;
       totalVnd += itemTotalVnd;
@@ -73,72 +66,25 @@ export class OrdersService {
       customer_name: dto.customer_name,
       customer_phone: dto.customer_phone,
       type: dto.type,
+      payment_method: dto.payment_method,
+      subtotal_vnd: totalVnd,
+      discount_vnd: 0,
+      shipping_fee_vnd: 0,
       total_price: totalPrice,
       total_price_vnd: totalVnd,
       payment_status: 'UNPAID',
       note: dto.note,
       address: dto.address,
-      items: itemsData.map(i => ({
+      items: itemsData.map((i) => ({
         ...i,
         price: Number(i.price),
       })),
     });
 
-    // Cộng điểm cho Customer đã đăng nhập
-    if (customerId) {
-      const points = this.calculatePoints(totalVnd);
-      if (points > 0) {
-        await this.ordersRepository.addPointsToCustomer(customerId, points);
-      }
-    }
-
     // Emit sự kiện real-time đến Admin Dashboard
     this.ordersGateway.emitNewOrder(order);
 
-    // Tích hợp ZaloPay nếu khách chọn thanh toán ZaloPay
-    if (dto.payment_method === 'zalopay') {
-      const zpToken = await this.createZaloPayOrder(order.id, totalVnd);
-      return { order, zp_trans_token: zpToken };
-    }
-
     return { order };
-  }
-
-  // ─── Tích hợp ZaloPay Sandbox ────────────────────────────────────────────────
-  private async createZaloPayOrder(orderId: string, amount: number) {
-    const appId = this.configService.getOrThrow<string>('ZALOPAY_APP_ID');
-    const key1 = this.configService.getOrThrow<string>('ZALOPAY_KEY1');
-    const endpoint = this.configService.getOrThrow<string>('ZALOPAY_ENDPOINT');
-
-    const appTransId = `${new Date().toISOString().slice(0, 10).replace(/-/g, '')}_${orderId.replace('#', '')}`;
-    const appTime = Date.now();
-
-    const embedData = JSON.stringify({ orderId });
-    const items = JSON.stringify([]);
-
-    const rawSignature = `${appId}|${appTransId}|Coffee Shop|${amount}|${appTime}|${embedData}|${items}`;
-    const mac = crypto.createHmac('sha256', key1).update(rawSignature).digest('hex');
-
-    const payload = {
-      app_id: Number(appId),
-      app_trans_id: appTransId,
-      app_user: 'coffee_shop_customer',
-      app_time: appTime,
-      item: items,
-      embed_data: embedData,
-      amount,
-      description: `Coffee Shop - Thanh toán đơn hàng ${orderId}`,
-      bank_code: '',
-      mac,
-    };
-
-    try {
-      const res = await axios.post(endpoint, null, { params: payload });
-      return res.data?.zp_trans_token ?? null;
-    } catch {
-      // ZaloPay lỗi không làm hỏng flow đặt hàng
-      return null;
-    }
   }
 
   // ─── Lấy lịch sử đơn hàng của Customer ──────────────────────────────────────

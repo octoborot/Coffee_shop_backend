@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
@@ -21,14 +25,19 @@ export class AuthService {
     // Bước 1: Đổi code lấy access_token
     let accessToken: string;
     try {
-      const tokenRes = await axios.get('https://oauth.zaloapp.com/v4/oa/access_token', {
-        params: { app_id: appId, code, grant_type: 'authorization_code' },
-        headers: { secret_key: secretKey },
-      });
+      const tokenRes = await axios.get(
+        'https://oauth.zaloapp.com/v4/oa/access_token',
+        {
+          params: { app_id: appId, code, grant_type: 'authorization_code' },
+          headers: { secret_key: secretKey },
+        },
+      );
       accessToken = tokenRes.data?.access_token;
       if (!accessToken) throw new Error('No access_token');
     } catch {
-      throw new BadRequestException('Không thể xác thực với Zalo. Code không hợp lệ hoặc đã hết hạn.');
+      throw new BadRequestException(
+        'Không thể xác thực với Zalo. Code không hợp lệ hoặc đã hết hạn.',
+      );
     }
 
     // Bước 2: Dùng access_token lấy thông tin user
@@ -40,7 +49,9 @@ export class AuthService {
       });
       zaloUser = userRes.data;
     } catch {
-      throw new BadRequestException('Không thể lấy thông tin người dùng từ Zalo.');
+      throw new BadRequestException(
+        'Không thể lấy thông tin người dùng từ Zalo.',
+      );
     }
 
     // Bước 3: Tìm hoặc tạo Customer trong DB

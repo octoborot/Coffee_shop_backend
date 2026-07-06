@@ -34,7 +34,10 @@ exports.AuthController = AuthController;
 __decorate([
     (0, common_1.Post)('zalo-login'),
     (0, swagger_1.ApiOperation)({ summary: 'Đăng nhập qua Zalo Mini App (Customer)' }),
-    (0, swagger_1.ApiResponse)({ status: 201, description: 'Trả về JWT token và thông tin Customer' }),
+    (0, swagger_1.ApiResponse)({
+        status: 201,
+        description: 'Trả về JWT token và thông tin Customer',
+    }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [zalo_login_dto_1.ZaloLoginDto]),
@@ -43,7 +46,10 @@ __decorate([
 __decorate([
     (0, common_1.Post)('admin/login'),
     (0, swagger_1.ApiOperation)({ summary: 'Đăng nhập Admin bằng username/password' }),
-    (0, swagger_1.ApiResponse)({ status: 201, description: 'Trả về JWT token và thông tin Admin' }),
+    (0, swagger_1.ApiResponse)({
+        status: 201,
+        description: 'Trả về JWT token và thông tin Admin',
+    }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Sai tài khoản hoặc mật khẩu' }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),

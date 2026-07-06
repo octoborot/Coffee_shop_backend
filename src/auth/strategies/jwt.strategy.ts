@@ -4,7 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 
 export interface JwtPayload {
-  sub: string;       // user id (customer or admin)
+  sub: string; // user id (customer or admin)
   role: 'customer' | 'admin' | 'staff';
   username?: string; // chỉ dành cho admin
 }

@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { CrmService } from './crm.service';
 import { CreateCrmDto } from './dto/create-crm.dto';
 import { UpdateCrmDto } from './dto/update-crm.dto';

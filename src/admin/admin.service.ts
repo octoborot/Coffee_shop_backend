@@ -9,11 +9,17 @@ export class AdminService {
     const now = new Date();
 
     // Hôm nay: từ 00:00 đến hiện tại
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
 
     // Tuần này: từ đầu tuần (Thứ 2) đến hiện tại
     const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
+    weekStart.setDate(
+      now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1),
+    );
     weekStart.setHours(0, 0, 0, 0);
 
     // Tháng này: từ ngày 1 đến hiện tại

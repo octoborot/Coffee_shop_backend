@@ -47,7 +47,7 @@ let AdminRepository = class AdminRepository {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         return this.prisma.customer.count({
-            where: { last_purchase: { gte: thirtyDaysAgo } },
+            where: { orders: { some: { created_at: { gte: thirtyDaysAgo } } } },
         });
     }
     async getTopProducts(limit = 5) {
