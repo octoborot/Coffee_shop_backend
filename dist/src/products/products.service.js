@@ -17,10 +17,79 @@ let ProductsService = class ProductsService {
     constructor(productsRepository) {
         this.productsRepository = productsRepository;
     }
-    findAll(filters) {
-        return this.productsRepository.findAll(filters);
+    toProductCard(product) {
+        return {
+            id: product.id,
+            name: product.name,
+            subname: product.subname,
+            category: product.category,
+            price: Number(product.price),
+            priceVnd: product.price_vnd,
+            rating: product.rating ? Number(product.rating) : null,
+            image: product.image,
+            status: product.status,
+            details: product.details,
+            description: product.description,
+            tags: product.tags.map((tag) => tag.name),
+        };
+    }
+    async findAll(query) {
+        const page = query.page ?? 1;
+        const limit = query.limit ?? 10;
+        const result = await this.productsRepository.findAll({
+            category: query.category,
+            status: query.status,
+            tag: query.tag,
+            search: query.search,
+            page,
+            limit,
+        });
+        return {
+            data: result.items.map((product) => this.toProductCard(product)),
+            meta: {
+                page,
+                limit,
+                total: result.total,
+                totalPages: Math.ceil(result.total / limit),
+            },
+        };
     }
     async findOne(id) {
+        const product = await this.productsRepository.findById(id);
+        if (!product) {
+            throw new common_1.NotFoundException(`Sản phẩm với ID ${id} không tồn tại`);
+        }
+        return this.toProductCard(product);
+    }
+    async create(dto, adminId) {
+        const product = await this.productsRepository.create(dto, adminId);
+        return this.toProductCard(product);
+    }
+    async update(id, dto, adminId) {
+        await this.ensureProductExists(id);
+        const product = await this.productsRepository.update(id, dto, adminId);
+        return this.toProductCard(product);
+    }
+    async remove(id) {
+        await this.ensureProductExists(id);
+        await this.productsRepository.delete(id);
+        return { message: 'Đã xóa sản phẩm thành công.' };
+    }
+    async createTag(productId, dto, adminId) {
+        await this.ensureProductExists(productId);
+        return this.productsRepository.createTag(productId, dto.name, adminId);
+    }
+    async updateTag(tagId, dto, adminId) {
+        if (!dto.name) {
+            return { message: 'Không có dữ liệu cần cập nhật.' };
+        }
+        return this.productsRepository.updateTag(tagId, dto.name, adminId);
+    }
+    async removeTag(tagId) {
+        await this.productsRepository.deleteTag(tagId);
+        return { message: 'Đã xóa tag sản phẩm thành công.' };
+    }
+    async ensureProductExists(id) {
         const product = await this.productsRepository.findById(id);
         if (!product) {
             throw new common_1.NotFoundException(`Sản phẩm với ID ${id} không tồn tại`);

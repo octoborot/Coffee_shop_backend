@@ -1,40 +1,100 @@
 import { ProductsService } from './products.service';
-import { ProductCategory, ProductStatus } from '@prisma/client';
+import { GetProductsQueryDto } from './dto/get-products-query.dto';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
+import { CreateProductTagDto } from './dto/create-product-tag.dto';
+import { UpdateProductTagDto } from './dto/update-product-tag.dto';
 export declare class ProductsController {
     private readonly productsService;
     constructor(productsService: ProductsService);
-    findAll(category?: ProductCategory, status?: ProductStatus): import("@prisma/client").Prisma.PrismaPromise<{
-        id: string;
-        name: string;
-        subname: string | null;
-        category: import("@prisma/client").$Enums.ProductCategory;
-        price: import("@prisma/client-runtime-utils").Decimal;
-        price_vnd: number;
-        rating: import("@prisma/client-runtime-utils").Decimal | null;
-        image: string | null;
-        status: import("@prisma/client").$Enums.ProductStatus;
-        details: string | null;
-        description: string | null;
-        created_at: Date;
-        updated_at: Date;
-        created_by_admin_id: string | null;
-        updated_by_admin_id: string | null;
-    }[]>;
+    findAll(query: GetProductsQueryDto): Promise<{
+        data: {
+            id: string;
+            name: string;
+            subname: string | null;
+            category: import("@prisma/client").$Enums.ProductCategory;
+            price: number;
+            priceVnd: number;
+            rating: number | null;
+            image: string | null;
+            status: import("@prisma/client").$Enums.ProductStatus;
+            details: string | null;
+            description: string | null;
+            tags: string[];
+        }[];
+        meta: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
+        };
+    }>;
     findOne(id: string): Promise<{
         id: string;
         name: string;
         subname: string | null;
         category: import("@prisma/client").$Enums.ProductCategory;
-        price: import("@prisma/client-runtime-utils").Decimal;
-        price_vnd: number;
-        rating: import("@prisma/client-runtime-utils").Decimal | null;
+        price: number;
+        priceVnd: number;
+        rating: number | null;
         image: string | null;
         status: import("@prisma/client").$Enums.ProductStatus;
         details: string | null;
         description: string | null;
+        tags: string[];
+    }>;
+    create(dto: CreateProductDto, req: any): Promise<{
+        id: string;
+        name: string;
+        subname: string | null;
+        category: import("@prisma/client").$Enums.ProductCategory;
+        price: number;
+        priceVnd: number;
+        rating: number | null;
+        image: string | null;
+        status: import("@prisma/client").$Enums.ProductStatus;
+        details: string | null;
+        description: string | null;
+        tags: string[];
+    }>;
+    update(id: string, dto: UpdateProductDto, req: any): Promise<{
+        id: string;
+        name: string;
+        subname: string | null;
+        category: import("@prisma/client").$Enums.ProductCategory;
+        price: number;
+        priceVnd: number;
+        rating: number | null;
+        image: string | null;
+        status: import("@prisma/client").$Enums.ProductStatus;
+        details: string | null;
+        description: string | null;
+        tags: string[];
+    }>;
+    remove(id: string): Promise<{
+        message: string;
+    }>;
+    createTag(productId: string, dto: CreateProductTagDto, req: any): Promise<{
+        id: string;
+        name: string;
         created_at: Date;
         updated_at: Date;
         created_by_admin_id: string | null;
         updated_by_admin_id: string | null;
+        product_id: string;
+    }>;
+    updateTag(tagId: string, dto: UpdateProductTagDto, req: any): Promise<{
+        id: string;
+        name: string;
+        created_at: Date;
+        updated_at: Date;
+        created_by_admin_id: string | null;
+        updated_by_admin_id: string | null;
+        product_id: string;
+    } | {
+        message: string;
+    }>;
+    removeTag(tagId: string): Promise<{
+        message: string;
     }>;
 }

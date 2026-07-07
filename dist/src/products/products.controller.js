@@ -16,29 +16,49 @@ exports.ProductsController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const products_service_1 = require("./products.service");
-const client_1 = require("@prisma/client");
+const get_products_query_dto_1 = require("./dto/get-products-query.dto");
+const create_product_dto_1 = require("./dto/create-product.dto");
+const update_product_dto_1 = require("./dto/update-product.dto");
+const create_product_tag_dto_1 = require("./dto/create-product-tag.dto");
+const update_product_tag_dto_1 = require("./dto/update-product-tag.dto");
+const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 let ProductsController = class ProductsController {
     productsService;
     constructor(productsService) {
         this.productsService = productsService;
     }
-    findAll(category, status) {
-        return this.productsService.findAll({ category, status });
+    findAll(query) {
+        return this.productsService.findAll(query);
     }
     findOne(id) {
         return this.productsService.findOne(id);
+    }
+    create(dto, req) {
+        return this.productsService.create(dto, req.user.id);
+    }
+    update(id, dto, req) {
+        return this.productsService.update(id, dto, req.user.id);
+    }
+    remove(id) {
+        return this.productsService.remove(id);
+    }
+    createTag(productId, dto, req) {
+        return this.productsService.createTag(productId, dto, req.user.id);
+    }
+    updateTag(tagId, dto, req) {
+        return this.productsService.updateTag(tagId, dto, req.user.id);
+    }
+    removeTag(tagId) {
+        return this.productsService.removeTag(tagId);
     }
 };
 exports.ProductsController = ProductsController;
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: 'Lấy danh sách tất cả sản phẩm' }),
-    (0, swagger_1.ApiQuery)({ name: 'category', enum: client_1.ProductCategory, required: false }),
-    (0, swagger_1.ApiQuery)({ name: 'status', enum: client_1.ProductStatus, required: false }),
-    __param(0, (0, common_1.Query)('category')),
-    __param(1, (0, common_1.Query)('status')),
+    (0, swagger_1.ApiOperation)({ summary: 'Lấy danh sách sản phẩm cho Mini App ProductCard' }),
+    __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [get_products_query_dto_1.GetProductsQueryDto]),
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "findAll", null);
 __decorate([
@@ -49,6 +69,73 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Post)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Tạo sản phẩm mới (Admin)' }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_product_dto_1.CreateProductDto, Object]),
+    __metadata("design:returntype", void 0)
+], ProductsController.prototype, "create", null);
+__decorate([
+    (0, common_1.Patch)(':id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Cập nhật sản phẩm (Admin)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_product_dto_1.UpdateProductDto, Object]),
+    __metadata("design:returntype", void 0)
+], ProductsController.prototype, "update", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Xóa sản phẩm (Admin)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ProductsController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Post)(':id/tags'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Thêm tag cho sản phẩm (Admin)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, create_product_tag_dto_1.CreateProductTagDto, Object]),
+    __metadata("design:returntype", void 0)
+], ProductsController.prototype, "createTag", null);
+__decorate([
+    (0, common_1.Patch)(':id/tags/:tagId'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Cập nhật tag sản phẩm (Admin)' }),
+    __param(0, (0, common_1.Param)('tagId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_product_tag_dto_1.UpdateProductTagDto, Object]),
+    __metadata("design:returntype", void 0)
+], ProductsController.prototype, "updateTag", null);
+__decorate([
+    (0, common_1.Delete)(':id/tags/:tagId'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Xóa tag sản phẩm (Admin)' }),
+    __param(0, (0, common_1.Param)('tagId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ProductsController.prototype, "removeTag", null);
 exports.ProductsController = ProductsController = __decorate([
     (0, swagger_1.ApiTags)('Products'),
     (0, common_1.Controller)('api/v1/products'),

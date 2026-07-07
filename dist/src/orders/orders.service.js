@@ -82,7 +82,8 @@ let OrdersService = class OrdersService {
             }
             else if (voucher.discount_type === 'PERCENT') {
                 discountVnd = (subtotalVnd * voucher.discount_value) / 100;
-                if (voucher.max_discount_vnd && discountVnd > voucher.max_discount_vnd) {
+                if (voucher.max_discount_vnd &&
+                    discountVnd > voucher.max_discount_vnd) {
                     discountVnd = voucher.max_discount_vnd;
                 }
             }

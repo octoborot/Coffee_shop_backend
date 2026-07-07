@@ -19,6 +19,7 @@ const products_module_1 = require("./products/products.module");
 const orders_module_1 = require("./orders/orders.module");
 const notifications_module_1 = require("./notifications/notifications.module");
 const gateway_module_1 = require("./gateway/gateway.module");
+const vouchers_module_1 = require("./vouchers/vouchers.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -34,6 +35,7 @@ exports.AppModule = AppModule = __decorate([
             orders_module_1.OrdersModule,
             notifications_module_1.NotificationsModule,
             gateway_module_1.GatewayModule,
+            vouchers_module_1.VouchersModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

@@ -35,8 +35,11 @@ export class OrdersService {
 
     // Resolve address from DB if customer_address_id is provided
     if (dto.customer_address_id) {
-      const custAddress = await this.ordersRepository.getCustomerAddressById(dto.customer_address_id);
-      if (!custAddress) throw new BadRequestException('Địa chỉ giao hàng không hợp lệ.');
+      const custAddress = await this.ordersRepository.getCustomerAddressById(
+        dto.customer_address_id,
+      );
+      if (!custAddress)
+        throw new BadRequestException('Địa chỉ giao hàng không hợp lệ.');
       address = custAddress.address;
       customerName = custAddress.receiver || customerName;
       customerPhone = custAddress.phone || customerPhone;
@@ -44,7 +47,9 @@ export class OrdersService {
 
     // Resolve store location
     if (dto.store_location_id) {
-      const store = await this.ordersRepository.getStoreLocationById(dto.store_location_id);
+      const store = await this.ordersRepository.getStoreLocationById(
+        dto.store_location_id,
+      );
       if (!store) throw new BadRequestException('Cửa hàng không tồn tại.');
     }
 
@@ -82,19 +87,26 @@ export class OrdersService {
 
     let discountVnd = 0;
     if (dto.voucher_id) {
-      const voucher = await this.ordersRepository.getVoucherById(dto.voucher_id);
+      const voucher = await this.ordersRepository.getVoucherById(
+        dto.voucher_id,
+      );
       if (!voucher || !voucher.is_active) {
         throw new BadRequestException('Voucher không hợp lệ hoặc đã hết hạn.');
       }
       if (subtotalVnd < voucher.min_order_vnd) {
-        throw new BadRequestException(`Voucher yêu cầu đơn tối thiểu ${voucher.min_order_vnd}đ.`);
+        throw new BadRequestException(
+          `Voucher yêu cầu đơn tối thiểu ${voucher.min_order_vnd}đ.`,
+        );
       }
 
       if (voucher.discount_type === 'FIXED_AMOUNT') {
         discountVnd = voucher.discount_value;
       } else if (voucher.discount_type === 'PERCENT') {
         discountVnd = (subtotalVnd * voucher.discount_value) / 100;
-        if (voucher.max_discount_vnd && discountVnd > voucher.max_discount_vnd) {
+        if (
+          voucher.max_discount_vnd &&
+          discountVnd > voucher.max_discount_vnd
+        ) {
           discountVnd = voucher.max_discount_vnd;
         }
       }

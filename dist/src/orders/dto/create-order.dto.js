@@ -80,7 +80,9 @@ __decorate([
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "customer_address_id", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ description: 'ID cửa hàng nhận món (nếu type = Pickup)' }),
+    (0, swagger_1.ApiPropertyOptional)({
+        description: 'ID cửa hàng nhận món (nếu type = Pickup)',
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)

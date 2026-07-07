@@ -14,53 +14,99 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificationsController = void 0;
 const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
 const notifications_service_1 = require("./notifications.service");
 const create_notification_dto_1 = require("./dto/create-notification.dto");
 const update_notification_dto_1 = require("./dto/update-notification.dto");
+const get_notifications_query_dto_1 = require("./dto/get-notifications-query.dto");
+const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 let NotificationsController = class NotificationsController {
     notificationsService;
     constructor(notificationsService) {
         this.notificationsService = notificationsService;
     }
-    create(createNotificationDto) {
-        return this.notificationsService.create(createNotificationDto);
+    findForCustomer(req, query) {
+        return this.notificationsService.findForCustomer(req.user.id, query);
     }
-    findAll() {
-        return this.notificationsService.findAll();
+    markAsRead(id) {
+        return this.notificationsService.markAsRead(id);
+    }
+    findAll(query) {
+        return this.notificationsService.findAll(query);
     }
     findOne(id) {
-        return this.notificationsService.findOne(+id);
+        return this.notificationsService.findOne(id);
     }
-    update(id, updateNotificationDto) {
-        return this.notificationsService.update(+id, updateNotificationDto);
+    create(dto, req) {
+        return this.notificationsService.create(dto, req.user.id);
+    }
+    update(id, dto) {
+        return this.notificationsService.update(id, dto);
     }
     remove(id) {
-        return this.notificationsService.remove(+id);
+        return this.notificationsService.remove(id);
     }
 };
 exports.NotificationsController = NotificationsController;
 __decorate([
-    (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
+    (0, common_1.Get)('customer/notifications'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({
+        summary: 'Lấy thông báo của customer kèm thông báo hệ thống',
+    }),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Query)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_notification_dto_1.CreateNotificationDto]),
+    __metadata("design:paramtypes", [Object, get_notifications_query_dto_1.GetNotificationsQueryDto]),
     __metadata("design:returntype", void 0)
-], NotificationsController.prototype, "create", null);
+], NotificationsController.prototype, "findForCustomer", null);
 __decorate([
-    (0, common_1.Get)(),
+    (0, common_1.Patch)('customer/notifications/:id/read'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Đánh dấu thông báo đã đọc' }),
+    __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], NotificationsController.prototype, "markAsRead", null);
+__decorate([
+    (0, common_1.Get)('admin/notifications'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Lấy tất cả thông báo (Admin)' }),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [get_notifications_query_dto_1.GetNotificationsQueryDto]),
     __metadata("design:returntype", void 0)
 ], NotificationsController.prototype, "findAll", null);
 __decorate([
-    (0, common_1.Get)(':id'),
+    (0, common_1.Get)('admin/notifications/:id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Lấy chi tiết thông báo (Admin)' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], NotificationsController.prototype, "findOne", null);
 __decorate([
-    (0, common_1.Patch)(':id'),
+    (0, common_1.Post)('admin/notifications'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Tạo thông báo (Admin)' }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_notification_dto_1.CreateNotificationDto, Object]),
+    __metadata("design:returntype", void 0)
+], NotificationsController.prototype, "create", null);
+__decorate([
+    (0, common_1.Patch)('admin/notifications/:id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Cập nhật thông báo (Admin)' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -68,14 +114,18 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], NotificationsController.prototype, "update", null);
 __decorate([
-    (0, common_1.Delete)(':id'),
+    (0, common_1.Delete)('admin/notifications/:id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Xóa thông báo (Admin)' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], NotificationsController.prototype, "remove", null);
 exports.NotificationsController = NotificationsController = __decorate([
-    (0, common_1.Controller)('notifications'),
+    (0, swagger_1.ApiTags)('Notifications'),
+    (0, common_1.Controller)('api/v1'),
     __metadata("design:paramtypes", [notifications_service_1.NotificationsService])
 ], NotificationsController);
 //# sourceMappingURL=notifications.controller.js.map
