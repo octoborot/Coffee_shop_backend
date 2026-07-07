@@ -3,6 +3,17 @@ export declare class CustomerRepository {
     private readonly prisma;
     constructor(prisma: PrismaService);
     findById(id: string): import("@prisma/client").Prisma.Prisma__CustomerClient<({
+        addresses: {
+            id: string;
+            created_at: Date;
+            updated_at: Date;
+            phone: string | null;
+            customer_id: string;
+            address: string;
+            label: string | null;
+            receiver: string | null;
+            is_default: boolean;
+        }[];
         orders: ({
             items: {
                 id: string;
@@ -57,5 +68,72 @@ export declare class CustomerRepository {
         phone: string | null;
         email: string | null;
         avatar_text: string | null;
+    }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    createAddress(customerId: string, data: {
+        label?: string;
+        receiver: string;
+        phone: string;
+        address: string;
+        is_default?: boolean;
+    }): Promise<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        customer_id: string;
+        address: string;
+        label: string | null;
+        receiver: string | null;
+        is_default: boolean;
+    }>;
+    getAddresses(customerId: string): import("@prisma/client").Prisma.PrismaPromise<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        customer_id: string;
+        address: string;
+        label: string | null;
+        receiver: string | null;
+        is_default: boolean;
+    }[]>;
+    getAddressById(addressId: string): import("@prisma/client").Prisma.Prisma__CustomerAddressClient<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        customer_id: string;
+        address: string;
+        label: string | null;
+        receiver: string | null;
+        is_default: boolean;
+    } | null, null, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    updateAddress(customerId: string, addressId: string, data: {
+        label?: string;
+        receiver?: string;
+        phone?: string;
+        address?: string;
+        is_default?: boolean;
+    }): Promise<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        customer_id: string;
+        address: string;
+        label: string | null;
+        receiver: string | null;
+        is_default: boolean;
+    }>;
+    deleteAddress(addressId: string): import("@prisma/client").Prisma.Prisma__CustomerAddressClient<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        customer_id: string;
+        address: string;
+        label: string | null;
+        receiver: string | null;
+        is_default: boolean;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
 }

@@ -1,4 +1,5 @@
 import { CustomerService } from './customer.service';
+import { CreateCustomerAddressDto, UpdateCustomerAddressDto } from './dto/customer-address.dto';
 declare class UpdateProfileDto {
     name?: string;
     email?: string;
@@ -13,6 +14,17 @@ export declare class CustomerController {
         email: string | null;
         avatar_text: string | null;
         created_at: Date;
+        addresses: {
+            id: string;
+            created_at: Date;
+            updated_at: Date;
+            phone: string | null;
+            customer_id: string;
+            address: string;
+            label: string | null;
+            receiver: string | null;
+            is_default: boolean;
+        }[];
         recent_orders: ({
             items: {
                 id: string;
@@ -56,6 +68,50 @@ export declare class CustomerController {
         phone: string | null;
         email: string | null;
         avatar_text: string | null;
+    }>;
+    getAddresses(req: any): import("@prisma/client").Prisma.PrismaPromise<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        customer_id: string;
+        address: string;
+        label: string | null;
+        receiver: string | null;
+        is_default: boolean;
+    }[]>;
+    createAddress(req: any, dto: CreateCustomerAddressDto): Promise<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        customer_id: string;
+        address: string;
+        label: string | null;
+        receiver: string | null;
+        is_default: boolean;
+    }>;
+    updateAddress(req: any, id: string, dto: UpdateCustomerAddressDto): Promise<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        customer_id: string;
+        address: string;
+        label: string | null;
+        receiver: string | null;
+        is_default: boolean;
+    }>;
+    deleteAddress(req: any, id: string): Promise<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        customer_id: string;
+        address: string;
+        label: string | null;
+        receiver: string | null;
+        is_default: boolean;
     }>;
 }
 export {};

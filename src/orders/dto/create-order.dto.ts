@@ -44,11 +44,26 @@ export class CreateOrderDto {
   type: OrderType;
 
   @ApiPropertyOptional({
-    description: 'Địa chỉ giao hàng (bắt buộc nếu type = Delivery)',
+    description: 'Địa chỉ giao hàng (bắt buộc nếu type = Delivery và không có customer_address_id)',
   })
   @IsOptional()
   @IsString()
   address?: string;
+
+  @ApiPropertyOptional({ description: 'ID sổ địa chỉ (nếu có)' })
+  @IsOptional()
+  @IsString()
+  customer_address_id?: string;
+
+  @ApiPropertyOptional({ description: 'ID cửa hàng nhận món (nếu type = Pickup)' })
+  @IsOptional()
+  @IsString()
+  store_location_id?: string;
+
+  @ApiPropertyOptional({ description: 'ID của voucher áp dụng' })
+  @IsOptional()
+  @IsString()
+  voucher_id?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

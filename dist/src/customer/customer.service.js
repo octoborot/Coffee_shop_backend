@@ -28,6 +28,7 @@ let CustomerService = class CustomerService {
             email: customer.email,
             avatar_text: customer.avatar_text,
             created_at: customer.created_at,
+            addresses: customer.addresses,
             recent_orders: customer.orders,
         };
     }
@@ -36,6 +37,28 @@ let CustomerService = class CustomerService {
         if (!customer)
             throw new common_1.NotFoundException('Không tìm thấy thông tin khách hàng.');
         return this.customerRepository.update(customerId, data);
+    }
+    getAddresses(customerId) {
+        return this.customerRepository.getAddresses(customerId);
+    }
+    createAddress(customerId, dto) {
+        return this.customerRepository.createAddress(customerId, dto);
+    }
+    async updateAddress(customerId, addressId, dto) {
+        const address = await this.customerRepository.getAddressById(addressId);
+        if (!address)
+            throw new common_1.NotFoundException('Không tìm thấy địa chỉ.');
+        if (address.customer_id !== customerId)
+            throw new common_1.ForbiddenException('Bạn không có quyền sửa địa chỉ này.');
+        return this.customerRepository.updateAddress(customerId, addressId, dto);
+    }
+    async deleteAddress(customerId, addressId) {
+        const address = await this.customerRepository.getAddressById(addressId);
+        if (!address)
+            throw new common_1.NotFoundException('Không tìm thấy địa chỉ.');
+        if (address.customer_id !== customerId)
+            throw new common_1.ForbiddenException('Bạn không có quyền xoá địa chỉ này.');
+        return this.customerRepository.deleteAddress(addressId);
     }
 };
 exports.CustomerService = CustomerService;

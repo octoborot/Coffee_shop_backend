@@ -18,7 +18,6 @@ const customer_module_1 = require("./customer/customer.module");
 const products_module_1 = require("./products/products.module");
 const orders_module_1 = require("./orders/orders.module");
 const notifications_module_1 = require("./notifications/notifications.module");
-const crm_module_1 = require("./crm/crm.module");
 const gateway_module_1 = require("./gateway/gateway.module");
 let AppModule = class AppModule {
 };
@@ -34,7 +33,6 @@ exports.AppModule = AppModule = __decorate([
             products_module_1.ProductsModule,
             orders_module_1.OrdersModule,
             notifications_module_1.NotificationsModule,
-            crm_module_1.CrmModule,
             gateway_module_1.GatewayModule,
         ],
         controllers: [app_controller_1.AppController],

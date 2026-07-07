@@ -9,7 +9,6 @@ import { CustomerModule } from './customer/customer.module';
 import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { CrmModule } from './crm/crm.module';
 import { GatewayModule } from './gateway/gateway.module';
 
 @Module({
@@ -22,7 +21,6 @@ import { GatewayModule } from './gateway/gateway.module';
     ProductsModule,
     OrdersModule,
     NotificationsModule,
-    CrmModule,
     GatewayModule,
   ],
   controllers: [AppController],

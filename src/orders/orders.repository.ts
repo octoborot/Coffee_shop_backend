@@ -14,10 +14,27 @@ export class OrdersRepository {
     });
   }
 
+  // ─── Lookup methods ─────────────────────────────────────────────────────────
+  getVoucherById(voucherId: string) {
+    return this.prisma.voucher.findUnique({ where: { id: voucherId } });
+  }
+
+  getCustomerAddressById(addressId: string) {
+    return this.prisma.customerAddress.findUnique({ where: { id: addressId } });
+  }
+
+  getStoreLocationById(locationId: string) {
+    return this.prisma.storeLocation.findUnique({ where: { id: locationId } });
+  }
+
   // ─── Tạo Order + OrderItems trong 1 transaction ──────────────────────────────
   async createOrderWithItems(data: {
     id: string;
     customer_id?: string;
+    customer_address_id?: string;
+    store_location_id?: string;
+    voucher_id?: string;
+    handled_by_admin_id?: string;
     customer_name?: string;
     customer_phone?: string;
     type: OrderType;
@@ -44,6 +61,10 @@ export class OrdersRepository {
         data: {
           id: data.id,
           customer_id: data.customer_id,
+          customer_address_id: data.customer_address_id,
+          store_location_id: data.store_location_id,
+          voucher_id: data.voucher_id,
+          handled_by_admin_id: data.handled_by_admin_id,
           customer_name: data.customer_name,
           customer_phone: data.customer_phone,
           type: data.type,
