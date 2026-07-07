@@ -25,8 +25,27 @@ export class OrdersService {
   // ─── Tạo đơn hàng mới ────────────────────────────────────────────────────────
   async createOrder(dto: CreateOrderDto, customerId?: string) {
     // Validation: Delivery phải có địa chỉ
-    if (dto.type === 'Delivery' && !dto.address) {
-      throw new BadRequestException('Vui lòng nhập địa chỉ giao hàng.');
+    if (dto.type === 'Delivery' && !dto.address && !dto.customer_address_id) {
+      throw new BadRequestException('Vui lòng cung cấp địa chỉ giao hàng.');
+    }
+
+    let address = dto.address;
+    let customerName = dto.customer_name;
+    let customerPhone = dto.customer_phone;
+
+    // Resolve address from DB if customer_address_id is provided
+    if (dto.customer_address_id) {
+      const custAddress = await this.ordersRepository.getCustomerAddressById(dto.customer_address_id);
+      if (!custAddress) throw new BadRequestException('Địa chỉ giao hàng không hợp lệ.');
+      address = custAddress.address;
+      customerName = custAddress.receiver || customerName;
+      customerPhone = custAddress.phone || customerPhone;
+    }
+
+    // Resolve store location
+    if (dto.store_location_id) {
+      const store = await this.ordersRepository.getStoreLocationById(dto.store_location_id);
+      if (!store) throw new BadRequestException('Cửa hàng không tồn tại.');
     }
 
     // Lấy giá sản phẩm từ DB (không tin giá FE gửi lên)
@@ -36,7 +55,7 @@ export class OrdersService {
     const productMap = new Map(products.map((p) => [p.id, p]));
 
     // Tính tổng tiền và chuẩn bị danh sách items
-    let totalVnd = 0;
+    let subtotalVnd = 0;
     const itemsData = dto.items.map((item) => {
       const product = productMap.get(item.product_id);
       if (!product) {
@@ -45,7 +64,7 @@ export class OrdersService {
         );
       }
       const itemTotalVnd = product.price_vnd * item.quantity;
-      totalVnd += itemTotalVnd;
+      subtotalVnd += itemTotalVnd;
       return {
         product_id: item.product_id,
         name: product.name,
@@ -56,6 +75,35 @@ export class OrdersService {
       };
     });
 
+    let shippingFeeVnd = 0;
+    if (dto.type === 'Delivery') {
+      shippingFeeVnd = 15000; // Phí ship mặc định
+    }
+
+    let discountVnd = 0;
+    if (dto.voucher_id) {
+      const voucher = await this.ordersRepository.getVoucherById(dto.voucher_id);
+      if (!voucher || !voucher.is_active) {
+        throw new BadRequestException('Voucher không hợp lệ hoặc đã hết hạn.');
+      }
+      if (subtotalVnd < voucher.min_order_vnd) {
+        throw new BadRequestException(`Voucher yêu cầu đơn tối thiểu ${voucher.min_order_vnd}đ.`);
+      }
+
+      if (voucher.discount_type === 'FIXED_AMOUNT') {
+        discountVnd = voucher.discount_value;
+      } else if (voucher.discount_type === 'PERCENT') {
+        discountVnd = (subtotalVnd * voucher.discount_value) / 100;
+        if (voucher.max_discount_vnd && discountVnd > voucher.max_discount_vnd) {
+          discountVnd = voucher.max_discount_vnd;
+        }
+      }
+      // TODO: Xử lý thêm loại BUY_ONE_GET_ONE nếu cần
+    }
+
+    let totalVnd = subtotalVnd + shippingFeeVnd - discountVnd;
+    if (totalVnd < 0) totalVnd = 0;
+
     const totalPrice = totalVnd / 25000; // quy đổi sang USD (tượng trưng)
 
     // Tạo order trong DB
@@ -63,18 +111,21 @@ export class OrdersService {
     const order = await this.ordersRepository.createOrderWithItems({
       id: orderId,
       customer_id: customerId,
-      customer_name: dto.customer_name,
-      customer_phone: dto.customer_phone,
+      customer_address_id: dto.customer_address_id,
+      store_location_id: dto.store_location_id,
+      voucher_id: dto.voucher_id,
+      customer_name: customerName,
+      customer_phone: customerPhone,
       type: dto.type,
       payment_method: dto.payment_method,
-      subtotal_vnd: totalVnd,
-      discount_vnd: 0,
-      shipping_fee_vnd: 0,
+      subtotal_vnd: subtotalVnd,
+      discount_vnd: discountVnd,
+      shipping_fee_vnd: shippingFeeVnd,
       total_price: totalPrice,
       total_price_vnd: totalVnd,
       payment_status: 'UNPAID',
       note: dto.note,
-      address: dto.address,
+      address: address,
       items: itemsData.map((i) => ({
         ...i,
         price: Number(i.price),

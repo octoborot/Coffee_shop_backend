@@ -23,12 +23,25 @@ let OrdersRepository = class OrdersRepository {
             select: { id: true, name: true, price: true, price_vnd: true },
         });
     }
+    getVoucherById(voucherId) {
+        return this.prisma.voucher.findUnique({ where: { id: voucherId } });
+    }
+    getCustomerAddressById(addressId) {
+        return this.prisma.customerAddress.findUnique({ where: { id: addressId } });
+    }
+    getStoreLocationById(locationId) {
+        return this.prisma.storeLocation.findUnique({ where: { id: locationId } });
+    }
     async createOrderWithItems(data) {
         return this.prisma.$transaction(async (tx) => {
             const order = await tx.order.create({
                 data: {
                     id: data.id,
                     customer_id: data.customer_id,
+                    customer_address_id: data.customer_address_id,
+                    store_location_id: data.store_location_id,
+                    voucher_id: data.voucher_id,
+                    handled_by_admin_id: data.handled_by_admin_id,
                     customer_name: data.customer_name,
                     customer_phone: data.customer_phone,
                     type: data.type,

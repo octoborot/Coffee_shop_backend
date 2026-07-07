@@ -1,4 +1,5 @@
 import { CustomerRepository } from './customer.repository';
+import { CreateCustomerAddressDto, UpdateCustomerAddressDto } from './dto/customer-address.dto';
 export declare class CustomerService {
     private readonly customerRepository;
     constructor(customerRepository: CustomerRepository);
@@ -9,6 +10,17 @@ export declare class CustomerService {
         email: string | null;
         avatar_text: string | null;
         created_at: Date;
+        addresses: {
+            id: string;
+            created_at: Date;
+            updated_at: Date;
+            phone: string | null;
+            customer_id: string;
+            address: string;
+            label: string | null;
+            receiver: string | null;
+            is_default: boolean;
+        }[];
         recent_orders: ({
             items: {
                 id: string;
@@ -55,5 +67,49 @@ export declare class CustomerService {
         phone: string | null;
         email: string | null;
         avatar_text: string | null;
+    }>;
+    getAddresses(customerId: string): import("@prisma/client").Prisma.PrismaPromise<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        customer_id: string;
+        address: string;
+        label: string | null;
+        receiver: string | null;
+        is_default: boolean;
+    }[]>;
+    createAddress(customerId: string, dto: CreateCustomerAddressDto): Promise<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        customer_id: string;
+        address: string;
+        label: string | null;
+        receiver: string | null;
+        is_default: boolean;
+    }>;
+    updateAddress(customerId: string, addressId: string, dto: UpdateCustomerAddressDto): Promise<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        customer_id: string;
+        address: string;
+        label: string | null;
+        receiver: string | null;
+        is_default: boolean;
+    }>;
+    deleteAddress(customerId: string, addressId: string): Promise<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        customer_id: string;
+        address: string;
+        label: string | null;
+        receiver: string | null;
+        is_default: boolean;
     }>;
 }

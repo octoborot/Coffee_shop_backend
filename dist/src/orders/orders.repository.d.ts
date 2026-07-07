@@ -9,9 +9,56 @@ export declare class OrdersRepository {
         price: import("@prisma/client-runtime-utils").Decimal;
         price_vnd: number;
     }[]>;
+    getVoucherById(voucherId: string): import("@prisma/client").Prisma.Prisma__VoucherClient<{
+        id: string;
+        image: string | null;
+        description: string | null;
+        created_at: Date;
+        updated_at: Date;
+        created_by_admin_id: string | null;
+        updated_by_admin_id: string | null;
+        title: string;
+        code: string;
+        discount_type: import("@prisma/client").$Enums.DiscountType;
+        discount_value: number;
+        min_order_vnd: number;
+        max_discount_vnd: number | null;
+        applicable_categories: import("@prisma/client").$Enums.ProductCategory[];
+        starts_at: Date | null;
+        ends_at: Date | null;
+        usage_limit: number | null;
+        used_count: number;
+        is_active: boolean;
+    } | null, null, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    getCustomerAddressById(addressId: string): import("@prisma/client").Prisma.Prisma__CustomerAddressClient<{
+        id: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        customer_id: string;
+        address: string;
+        label: string | null;
+        receiver: string | null;
+        is_default: boolean;
+    } | null, null, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    getStoreLocationById(locationId: string): import("@prisma/client").Prisma.Prisma__StoreLocationClient<{
+        id: string;
+        name: string;
+        created_at: Date;
+        updated_at: Date;
+        phone: string | null;
+        address: string;
+        is_active: boolean;
+        latitude: import("@prisma/client-runtime-utils").Decimal | null;
+        longitude: import("@prisma/client-runtime-utils").Decimal | null;
+    } | null, null, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     createOrderWithItems(data: {
         id: string;
         customer_id?: string;
+        customer_address_id?: string;
+        store_location_id?: string;
+        voucher_id?: string;
+        handled_by_admin_id?: string;
         customer_name?: string;
         customer_phone?: string;
         type: OrderType;

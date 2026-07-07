@@ -44,6 +44,9 @@ class CreateOrderDto {
     items;
     type;
     address;
+    customer_address_id;
+    store_location_id;
+    voucher_id;
     note;
     payment_method;
     customer_name;
@@ -64,12 +67,30 @@ __decorate([
 ], CreateOrderDto.prototype, "type", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
-        description: 'Địa chỉ giao hàng (bắt buộc nếu type = Delivery)',
+        description: 'Địa chỉ giao hàng (bắt buộc nếu type = Delivery và không có customer_address_id)',
     }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "address", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'ID sổ địa chỉ (nếu có)' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateOrderDto.prototype, "customer_address_id", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'ID cửa hàng nhận món (nếu type = Pickup)' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateOrderDto.prototype, "store_location_id", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'ID của voucher áp dụng' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateOrderDto.prototype, "voucher_id", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),

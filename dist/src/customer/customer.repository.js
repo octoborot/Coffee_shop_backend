@@ -21,6 +21,9 @@ let CustomerRepository = class CustomerRepository {
         return this.prisma.customer.findUnique({
             where: { id },
             include: {
+                addresses: {
+                    orderBy: { created_at: 'desc' },
+                },
                 orders: {
                     orderBy: { created_at: 'desc' },
                     take: 5,
@@ -33,6 +36,48 @@ let CustomerRepository = class CustomerRepository {
         return this.prisma.customer.update({
             where: { id },
             data,
+        });
+    }
+    async createAddress(customerId, data) {
+        if (data.is_default) {
+            await this.prisma.customerAddress.updateMany({
+                where: { customer_id: customerId },
+                data: { is_default: false },
+            });
+        }
+        return this.prisma.customerAddress.create({
+            data: {
+                ...data,
+                customer_id: customerId,
+            },
+        });
+    }
+    getAddresses(customerId) {
+        return this.prisma.customerAddress.findMany({
+            where: { customer_id: customerId },
+            orderBy: { created_at: 'desc' },
+        });
+    }
+    getAddressById(addressId) {
+        return this.prisma.customerAddress.findUnique({
+            where: { id: addressId },
+        });
+    }
+    async updateAddress(customerId, addressId, data) {
+        if (data.is_default) {
+            await this.prisma.customerAddress.updateMany({
+                where: { customer_id: customerId },
+                data: { is_default: false },
+            });
+        }
+        return this.prisma.customerAddress.update({
+            where: { id: addressId },
+            data,
+        });
+    }
+    deleteAddress(addressId) {
+        return this.prisma.customerAddress.delete({
+            where: { id: addressId },
         });
     }
 };
