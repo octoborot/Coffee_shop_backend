@@ -25,4 +25,11 @@ export class AuthRepository {
       where: { username },
     });
   }
+
+  updateCustomerPhone(customerId: string, phone: string) {
+    return this.prisma.customer.update({
+      where: { id: customerId },
+      data: { phone },
+    });
+  }
 }

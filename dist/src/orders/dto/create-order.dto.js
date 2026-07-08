@@ -22,7 +22,7 @@ class OrderItemDto {
 exports.OrderItemDto = OrderItemDto;
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'UUID của sản phẩm' }),
-    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsUUID)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], OrderItemDto.prototype, "product_id", void 0);
@@ -76,7 +76,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'ID sổ địa chỉ (nếu có)' }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "customer_address_id", void 0);
 __decorate([
@@ -84,13 +84,13 @@ __decorate([
         description: 'ID cửa hàng nhận món (nếu type = Pickup)',
     }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "store_location_id", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'ID của voucher áp dụng' }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "voucher_id", void 0);
 __decorate([

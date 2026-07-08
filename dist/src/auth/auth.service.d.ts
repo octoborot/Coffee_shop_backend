@@ -18,6 +18,22 @@ export declare class AuthService {
             avatar_text: string | null;
         };
     }>;
+    zaloMiniAppLogin(accessToken: string): Promise<{
+        access_token: string;
+        customer: {
+            id: string;
+            name: string;
+            created_at: Date;
+            zalo_id: string;
+            phone: string | null;
+            email: string | null;
+            avatar_text: string | null;
+        };
+    }>;
+    zaloMiniAppGetPhone(customerId: string, accessToken: string, token: string): Promise<{
+        phone: any;
+        message: string;
+    }>;
     adminLogin(username: string, password: string): Promise<{
         access_token: string;
         admin: {

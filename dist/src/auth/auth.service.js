@@ -102,6 +102,65 @@ let AuthService = class AuthService {
         });
         return { access_token: token, customer };
     }
+    async zaloMiniAppLogin(accessToken) {
+        let zaloUser;
+        try {
+            const userRes = await axios_1.default.get('https://graph.zalo.me/v2.0/me', {
+                params: { fields: 'id,name,picture' },
+                headers: { access_token: accessToken },
+            });
+            zaloUser = userRes.data;
+        }
+        catch {
+            throw new common_1.BadRequestException('Không thể lấy thông tin người dùng từ Zalo. Access Token không hợp lệ.');
+        }
+        if (zaloUser.error) {
+            throw new common_1.BadRequestException(`Lỗi từ Zalo: ${zaloUser.message || 'Unknown error'}`);
+        }
+        let customer = await this.authRepository.findCustomerByZaloId(zaloUser.id);
+        if (!customer) {
+            customer = await this.authRepository.createCustomer({
+                zalo_id: zaloUser.id,
+                name: zaloUser.name,
+                avatar_text: zaloUser.name.charAt(0).toUpperCase(),
+            });
+        }
+        const jwtToken = this.jwtService.sign({
+            sub: customer.id,
+            role: 'customer',
+        });
+        return { access_token: jwtToken, customer };
+    }
+    async zaloMiniAppGetPhone(customerId, accessToken, token) {
+        const secretKey = this.configService.get('ZALO_APP_SECRET');
+        if (!secretKey) {
+            throw new common_1.BadRequestException('Chưa cấu hình ZALO_APP_SECRET');
+        }
+        try {
+            const response = await axios_1.default.get('https://graph.zalo.me/v2.0/me/info', {
+                headers: {
+                    access_token: accessToken,
+                    code: token,
+                    secret_key: secretKey,
+                },
+            });
+            const data = response.data;
+            if (data.error) {
+                throw new common_1.BadRequestException(`Lỗi giải mã số điện thoại: ${data.message}`);
+            }
+            const phone = data.data?.number;
+            if (!phone) {
+                throw new common_1.BadRequestException('Không tìm thấy số điện thoại trong payload.');
+            }
+            await this.authRepository.updateCustomerPhone(customerId, phone);
+            return { phone, message: 'Cập nhật số điện thoại thành công' };
+        }
+        catch (error) {
+            if (error instanceof common_1.BadRequestException)
+                throw error;
+            throw new common_1.BadRequestException('Không thể gọi API Zalo để lấy số điện thoại.');
+        }
+    }
     async adminLogin(username, password) {
         const admin = await this.authRepository.findAdminByUsername(username);
         if (!admin) {

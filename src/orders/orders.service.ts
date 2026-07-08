@@ -6,6 +6,7 @@ import {
 import { OrderStatus } from '@prisma/client';
 import { OrdersRepository } from './orders.repository';
 import { OrdersGateway } from '../gateway/orders.gateway';
+import { ZaloPayService } from '../zalopay/zalopay.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
@@ -14,6 +15,7 @@ export class OrdersService {
   constructor(
     private readonly ordersRepository: OrdersRepository,
     private readonly ordersGateway: OrdersGateway,
+    private readonly zaloPayService: ZaloPayService,
   ) {}
 
   // ─── Tạo mã đơn hàng ngẫu nhiên: #BB-XXXX ──────────────────────────────────
@@ -147,7 +149,25 @@ export class OrdersService {
     // Emit sự kiện real-time đến Admin Dashboard
     this.ordersGateway.emitNewOrder(order);
 
-    return { order };
+    // Xử lý tạo link ZaloPay nếu chọn thanh toán qua ZaloPay
+    let zaloPayResult: any = null;
+    if (dto.payment_method === 'ZALOPAY') {
+      // trans_id format: yyMMdd_xxxxx
+      const now = new Date();
+      const yy = now.getFullYear().toString().slice(2);
+      const mm = (now.getMonth() + 1).toString().padStart(2, '0');
+      const dd = now.getDate().toString().padStart(2, '0');
+      const transId = `${yy}${mm}${dd}_${orderId.replace('#BB-', '')}`;
+
+      zaloPayResult = await this.zaloPayService.createZaloPayOrder(
+        transId,
+        totalVnd,
+        `Thanh toan don hang ${orderId}`,
+        itemsData,
+      );
+    }
+
+    return { order, zalopay: zaloPayResult };
   }
 
   // ─── Lấy lịch sử đơn hàng của Customer ──────────────────────────────────────

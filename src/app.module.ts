@@ -11,6 +11,7 @@ import { OrdersModule } from './orders/orders.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { GatewayModule } from './gateway/gateway.module';
 import { VouchersModule } from './vouchers/vouchers.module';
+import { ZaloPayModule } from './zalopay/zalopay.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { VouchersModule } from './vouchers/vouchers.module';
     NotificationsModule,
     GatewayModule,
     VouchersModule,
+    ZaloPayModule,
   ],
   controllers: [AppController],
   providers: [AppService],

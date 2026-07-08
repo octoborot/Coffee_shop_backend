@@ -12,12 +12,13 @@ const orders_controller_1 = require("./orders.controller");
 const orders_service_1 = require("./orders.service");
 const orders_repository_1 = require("./orders.repository");
 const gateway_module_1 = require("../gateway/gateway.module");
+const zalopay_module_1 = require("../zalopay/zalopay.module");
 let OrdersModule = class OrdersModule {
 };
 exports.OrdersModule = OrdersModule;
 exports.OrdersModule = OrdersModule = __decorate([
     (0, common_1.Module)({
-        imports: [gateway_module_1.GatewayModule],
+        imports: [gateway_module_1.GatewayModule, zalopay_module_1.ZaloPayModule],
         controllers: [orders_controller_1.OrdersController],
         providers: [orders_service_1.OrdersService, orders_repository_1.OrdersRepository],
     })
