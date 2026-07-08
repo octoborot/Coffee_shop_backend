@@ -30,6 +30,12 @@ let AuthRepository = class AuthRepository {
             where: { username },
         });
     }
+    updateCustomerPhone(customerId, phone) {
+        return this.prisma.customer.update({
+            where: { id: customerId },
+            data: { phone },
+        });
+    }
 };
 exports.AuthRepository = AuthRepository;
 exports.AuthRepository = AuthRepository = __decorate([

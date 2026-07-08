@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Catch, ExceptionFilter, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
@@ -17,6 +17,26 @@ async function bootstrap() {
       transform: true, // Tự động chuyển đổi kiểu dữ liệu
     }),
   );
+
+  // Thêm Exception Filter tạm thời để debug lỗi 500
+  @Catch()
+  class AllExceptionsFilter implements ExceptionFilter {
+    catch(exception: any, host: ArgumentsHost) {
+      const ctx = host.switchToHttp();
+      const response = ctx.getResponse();
+      const status = exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+      
+      console.error('Unhandled Exception:', exception);
+      
+      response.status(status).json({
+        statusCode: status,
+        message: exception.message || 'Internal server error',
+        stack: exception.stack,
+        details: exception,
+      });
+    }
+  }
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Swagger UI
   const config = new DocumentBuilder()

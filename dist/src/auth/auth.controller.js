@@ -17,6 +17,8 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const auth_service_1 = require("./auth.service");
 const zalo_login_dto_1 = require("./dto/zalo-login.dto");
+const zalo_miniapp_login_dto_1 = require("./dto/zalo-miniapp-login.dto");
+const zalo_phone_dto_1 = require("./dto/zalo-phone.dto");
 const admin_login_dto_1 = require("./dto/admin-login.dto");
 let AuthController = class AuthController {
     authService;
@@ -25,6 +27,12 @@ let AuthController = class AuthController {
     }
     zaloLogin(dto) {
         return this.authService.zaloLogin(dto.code);
+    }
+    zaloMiniAppLogin(dto) {
+        return this.authService.zaloMiniAppLogin(dto.access_token);
+    }
+    zaloMiniAppGetPhone(dto) {
+        return this.authService.zaloMiniAppGetPhone(dto.customerId, dto.access_token, dto.token);
     }
     adminLogin(dto) {
         return this.authService.adminLogin(dto.username, dto.password);
@@ -43,6 +51,30 @@ __decorate([
     __metadata("design:paramtypes", [zalo_login_dto_1.ZaloLoginDto]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "zaloLogin", null);
+__decorate([
+    (0, common_1.Post)('zalo-miniapp/login'),
+    (0, swagger_1.ApiOperation)({ summary: 'Đăng nhập qua Zalo Mini App (Bằng Access Token)' }),
+    (0, swagger_1.ApiResponse)({
+        status: 201,
+        description: 'Trả về JWT token và thông tin Customer',
+    }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [zalo_miniapp_login_dto_1.ZaloMiniAppLoginDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "zaloMiniAppLogin", null);
+__decorate([
+    (0, common_1.Post)('zalo-miniapp/phone'),
+    (0, swagger_1.ApiOperation)({ summary: 'Giải mã số điện thoại từ Zalo Mini App' }),
+    (0, swagger_1.ApiResponse)({
+        status: 201,
+        description: 'Trả về số điện thoại và cập nhật vào Customer',
+    }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [zalo_phone_dto_1.ZaloPhoneDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "zaloMiniAppGetPhone", null);
 __decorate([
     (0, common_1.Post)('admin/login'),
     (0, swagger_1.ApiOperation)({ summary: 'Đăng nhập Admin bằng username/password' }),

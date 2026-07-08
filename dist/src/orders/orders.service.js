@@ -13,12 +13,15 @@ exports.OrdersService = void 0;
 const common_1 = require("@nestjs/common");
 const orders_repository_1 = require("./orders.repository");
 const orders_gateway_1 = require("../gateway/orders.gateway");
+const zalopay_service_1 = require("../zalopay/zalopay.service");
 let OrdersService = class OrdersService {
     ordersRepository;
     ordersGateway;
-    constructor(ordersRepository, ordersGateway) {
+    zaloPayService;
+    constructor(ordersRepository, ordersGateway, zaloPayService) {
         this.ordersRepository = ordersRepository;
         this.ordersGateway = ordersGateway;
+        this.zaloPayService = zaloPayService;
     }
     generateOrderId() {
         const num = Math.floor(1000 + Math.random() * 9000);
@@ -117,7 +120,16 @@ let OrdersService = class OrdersService {
             })),
         });
         this.ordersGateway.emitNewOrder(order);
-        return { order };
+        let zaloPayResult = null;
+        if (dto.payment_method === 'ZALOPAY') {
+            const now = new Date();
+            const yy = now.getFullYear().toString().slice(2);
+            const mm = (now.getMonth() + 1).toString().padStart(2, '0');
+            const dd = now.getDate().toString().padStart(2, '0');
+            const transId = `${yy}${mm}${dd}_${orderId.replace('#BB-', '')}`;
+            zaloPayResult = await this.zaloPayService.createZaloPayOrder(transId, totalVnd, `Thanh toan don hang ${orderId}`, itemsData);
+        }
+        return { order, zalopay: zaloPayResult };
     }
     getOrderHistory(customerId) {
         return this.ordersRepository.findByCustomerId(customerId);
@@ -139,6 +151,7 @@ exports.OrdersService = OrdersService;
 exports.OrdersService = OrdersService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [orders_repository_1.OrdersRepository,
-        orders_gateway_1.OrdersGateway])
+        orders_gateway_1.OrdersGateway,
+        zalopay_service_1.ZaloPayService])
 ], OrdersService);
 //# sourceMappingURL=orders.service.js.map

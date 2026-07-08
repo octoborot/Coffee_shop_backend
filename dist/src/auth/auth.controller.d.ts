@@ -1,5 +1,7 @@
 import { AuthService } from './auth.service';
 import { ZaloLoginDto } from './dto/zalo-login.dto';
+import { ZaloMiniAppLoginDto } from './dto/zalo-miniapp-login.dto';
+import { ZaloPhoneDto } from './dto/zalo-phone.dto';
 import { AdminLoginDto } from './dto/admin-login.dto';
 export declare class AuthController {
     private readonly authService;
@@ -8,13 +10,29 @@ export declare class AuthController {
         access_token: string;
         customer: {
             id: string;
-            name: string;
-            created_at: Date;
             zalo_id: string;
             phone: string | null;
             email: string | null;
+            name: string;
             avatar_text: string | null;
+            created_at: Date;
         };
+    }>;
+    zaloMiniAppLogin(dto: ZaloMiniAppLoginDto): Promise<{
+        access_token: string;
+        customer: {
+            id: string;
+            zalo_id: string;
+            phone: string | null;
+            email: string | null;
+            name: string;
+            avatar_text: string | null;
+            created_at: Date;
+        };
+    }>;
+    zaloMiniAppGetPhone(dto: ZaloPhoneDto): Promise<{
+        phone: any;
+        message: string;
     }>;
     adminLogin(dto: AdminLoginDto): Promise<{
         access_token: string;
