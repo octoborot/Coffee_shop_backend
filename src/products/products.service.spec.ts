@@ -1,5 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
-import { ProductCategory, ProductStatus } from '@prisma/client';
+import { Prisma, ProductCategory, ProductStatus } from '@prisma/client';
 import { ProductsRepository } from './products.repository';
 import { ProductsService } from './products.service';
 
@@ -14,9 +14,9 @@ describe('ProductsService', () => {
     name: 'Caramel Macchiato',
     subname: 'Caramel Macchiato Đá',
     category: ProductCategory.Coffee,
-    price: 1.8 as any,
+    price: new Prisma.Decimal(1.8),
     price_vnd: 45000,
-    rating: 4.8 as any,
+    rating: new Prisma.Decimal(4.8),
     image: 'https://example.com/caramel.jpg',
     status: ProductStatus.Available,
     details: 'Size M',
