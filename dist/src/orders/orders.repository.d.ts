@@ -17,12 +17,12 @@ export declare class OrdersRepository {
         updated_at: Date;
         created_by_admin_id: string | null;
         updated_by_admin_id: string | null;
+        max_discount_vnd: number | null;
         code: string;
         title: string;
         discount_type: import("@prisma/client").$Enums.DiscountType;
         discount_value: number;
         min_order_vnd: number;
-        max_discount_vnd: number | null;
         applicable_categories: import("@prisma/client").$Enums.ProductCategory[];
         starts_at: Date | null;
         ends_at: Date | null;

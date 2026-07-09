@@ -10,24 +10,24 @@ export declare class AuthController {
         access_token: string;
         customer: {
             id: string;
+            name: string;
+            created_at: Date;
             zalo_id: string;
             phone: string | null;
             email: string | null;
-            name: string;
             avatar_text: string | null;
-            created_at: Date;
         };
     }>;
     zaloMiniAppLogin(dto: ZaloMiniAppLoginDto): Promise<{
         access_token: string;
         customer: {
             id: string;
+            name: string;
+            created_at: Date;
             zalo_id: string;
             phone: string | null;
             email: string | null;
-            name: string;
             avatar_text: string | null;
-            created_at: Date;
         };
     }>;
     zaloMiniAppGetPhone(dto: ZaloPhoneDto): Promise<{
