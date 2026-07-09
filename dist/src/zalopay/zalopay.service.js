@@ -57,7 +57,8 @@ let ZaloPayService = class ZaloPayService {
     }
     async createZaloPayOrder(appTransId, amount, description, items, embedData = {}) {
         const appId = this.configService.get('ZALOPAY_APP_ID') || '2553';
-        const key1 = this.configService.get('ZALOPAY_KEY1') || 'PcY4iZIKFCIdgZvA6ueMcMHHUbRLYjPL';
+        const key1 = this.configService.get('ZALOPAY_KEY1') ||
+            'PcY4iZIKFCIdgZvA6ueMcMHHUbRLYjPL';
         const endpoint = this.configService.get('ZALOPAY_ENDPOINT') ||
             'https://sb-openapi.zalopay.vn/v2/create';
         const order = {

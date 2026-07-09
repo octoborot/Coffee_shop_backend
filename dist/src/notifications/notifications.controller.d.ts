@@ -2,10 +2,15 @@ import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { GetNotificationsQueryDto } from './dto/get-notifications-query.dto';
+type AuthenticatedRequest = {
+    user: {
+        id: string;
+    };
+};
 export declare class NotificationsController {
     private readonly notificationsService;
     constructor(notificationsService: NotificationsService);
-    findForCustomer(req: any, query: GetNotificationsQueryDto): Promise<{
+    findForCustomer(req: AuthenticatedRequest, query: GetNotificationsQueryDto): Promise<{
         data: {
             id: string;
             image: string | null;
@@ -65,7 +70,7 @@ export declare class NotificationsController {
         customer_id: string | null;
         is_read: boolean;
     }>;
-    create(dto: CreateNotificationDto, req: any): import("@prisma/client").Prisma.Prisma__NotificationClient<{
+    create(dto: CreateNotificationDto, req: AuthenticatedRequest): import("@prisma/client").Prisma.Prisma__NotificationClient<{
         id: string;
         image: string | null;
         description: string;
@@ -91,3 +96,4 @@ export declare class NotificationsController {
         message: string;
     }>;
 }
+export {};

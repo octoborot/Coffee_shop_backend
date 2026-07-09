@@ -19,6 +19,11 @@ import { CreateProductTagDto } from './dto/create-product-tag.dto';
 import { UpdateProductTagDto } from './dto/update-product-tag.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
+type AuthenticatedRequest = {
+  user: {
+    id: string;
+  };
+};
 @ApiTags('Products')
 @Controller('api/v1/products') // Đổi đường dẫn cho đồng bộ với API khác
 export class ProductsController {
@@ -40,7 +45,7 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Tạo sản phẩm mới (Admin)' })
-  create(@Body() dto: CreateProductDto, @Request() req) {
+  create(@Body() dto: CreateProductDto, @Request() req: AuthenticatedRequest) {
     return this.productsService.create(dto, req.user.id);
   }
 
@@ -51,7 +56,7 @@ export class ProductsController {
   update(
     @Param('id') id: string,
     @Body() dto: UpdateProductDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.productsService.update(id, dto, req.user.id);
   }
@@ -71,7 +76,7 @@ export class ProductsController {
   createTag(
     @Param('id') productId: string,
     @Body() dto: CreateProductTagDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.productsService.createTag(productId, dto, req.user.id);
   }
@@ -83,7 +88,7 @@ export class ProductsController {
   updateTag(
     @Param('tagId') tagId: string,
     @Body() dto: UpdateProductTagDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.productsService.updateTag(tagId, dto, req.user.id);
   }

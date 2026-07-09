@@ -2,6 +2,11 @@ import { CreateVoucherDto } from './dto/create-voucher.dto';
 import { GetVouchersQueryDto } from './dto/get-vouchers-query.dto';
 import { UpdateVoucherDto } from './dto/update-voucher.dto';
 import { VouchersService } from './vouchers.service';
+type AuthenticatedRequest = {
+    user: {
+        id: string;
+    };
+};
 export declare class VouchersController {
     private readonly vouchersService;
     constructor(vouchersService: VouchersService);
@@ -105,7 +110,7 @@ export declare class VouchersController {
         used_count: number;
         is_active: boolean;
     }>;
-    create(dto: CreateVoucherDto, req: any): import("@prisma/client").Prisma.Prisma__VoucherClient<{
+    create(dto: CreateVoucherDto, req: AuthenticatedRequest): import("@prisma/client").Prisma.Prisma__VoucherClient<{
         id: string;
         image: string | null;
         description: string | null;
@@ -126,7 +131,7 @@ export declare class VouchersController {
         used_count: number;
         is_active: boolean;
     }, never, import("@prisma/client/runtime/client").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
-    update(id: string, dto: UpdateVoucherDto, req: any): Promise<{
+    update(id: string, dto: UpdateVoucherDto, req: AuthenticatedRequest): Promise<{
         id: string;
         image: string | null;
         description: string | null;
@@ -151,3 +156,4 @@ export declare class VouchersController {
         message: string;
     }>;
 }
+export {};

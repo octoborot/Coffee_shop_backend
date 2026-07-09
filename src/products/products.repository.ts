@@ -90,7 +90,8 @@ export class ProductsRepository {
   }
 
   update(id: string, data: UpdateProductDto, adminId?: string) {
-    const { tags: _tags, ...productData } = data;
+    const { tags, ...productData } = data;
+    void tags;
 
     return this.prisma.product.update({
       where: { id },
