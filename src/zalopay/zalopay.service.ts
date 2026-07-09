@@ -15,7 +15,9 @@ export class ZaloPayService {
     embedData: any = {},
   ) {
     const appId = this.configService.get<string>('ZALOPAY_APP_ID') || '2553';
-    const key1 = this.configService.get<string>('ZALOPAY_KEY1') || 'PcY4iZIKFCIdgZvA6ueMcMHHUbRLYjPL';
+    const key1 =
+      this.configService.get<string>('ZALOPAY_KEY1') ||
+      'PcY4iZIKFCIdgZvA6ueMcMHHUbRLYjPL';
     const endpoint =
       this.configService.get<string>('ZALOPAY_ENDPOINT') ||
       'https://sb-openapi.zalopay.vn/v2/create';

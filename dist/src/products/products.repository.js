@@ -82,7 +82,8 @@ let ProductsRepository = class ProductsRepository {
         });
     }
     update(id, data, adminId) {
-        const { tags: _tags, ...productData } = data;
+        const { tags, ...productData } = data;
+        void tags;
         return this.prisma.product.update({
             where: { id },
             data: {

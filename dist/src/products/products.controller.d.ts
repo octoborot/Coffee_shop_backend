@@ -4,6 +4,11 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateProductTagDto } from './dto/create-product-tag.dto';
 import { UpdateProductTagDto } from './dto/update-product-tag.dto';
+type AuthenticatedRequest = {
+    user: {
+        id: string;
+    };
+};
 export declare class ProductsController {
     private readonly productsService;
     constructor(productsService: ProductsService);
@@ -43,7 +48,7 @@ export declare class ProductsController {
         description: string | null;
         tags: string[];
     }>;
-    create(dto: CreateProductDto, req: any): Promise<{
+    create(dto: CreateProductDto, req: AuthenticatedRequest): Promise<{
         id: string;
         name: string;
         subname: string | null;
@@ -57,7 +62,7 @@ export declare class ProductsController {
         description: string | null;
         tags: string[];
     }>;
-    update(id: string, dto: UpdateProductDto, req: any): Promise<{
+    update(id: string, dto: UpdateProductDto, req: AuthenticatedRequest): Promise<{
         id: string;
         name: string;
         subname: string | null;
@@ -74,7 +79,7 @@ export declare class ProductsController {
     remove(id: string): Promise<{
         message: string;
     }>;
-    createTag(productId: string, dto: CreateProductTagDto, req: any): Promise<{
+    createTag(productId: string, dto: CreateProductTagDto, req: AuthenticatedRequest): Promise<{
         id: string;
         name: string;
         created_at: Date;
@@ -83,7 +88,7 @@ export declare class ProductsController {
         updated_by_admin_id: string | null;
         product_id: string;
     }>;
-    updateTag(tagId: string, dto: UpdateProductTagDto, req: any): Promise<{
+    updateTag(tagId: string, dto: UpdateProductTagDto, req: AuthenticatedRequest): Promise<{
         id: string;
         name: string;
         created_at: Date;
@@ -98,3 +103,4 @@ export declare class ProductsController {
         message: string;
     }>;
 }
+export {};

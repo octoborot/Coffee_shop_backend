@@ -17,6 +17,11 @@ import { GetVouchersQueryDto } from './dto/get-vouchers-query.dto';
 import { UpdateVoucherDto } from './dto/update-voucher.dto';
 import { VouchersService } from './vouchers.service';
 
+type AuthenticatedRequest = {
+  user: {
+    id: string;
+  };
+};
 @ApiTags('Vouchers')
 @Controller('api/v1')
 export class VouchersController {
@@ -56,7 +61,7 @@ export class VouchersController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Tạo voucher (Admin)' })
-  create(@Body() dto: CreateVoucherDto, @Request() req) {
+  create(@Body() dto: CreateVoucherDto, @Request() req: AuthenticatedRequest) {
     return this.vouchersService.create(dto, req.user.id);
   }
 
@@ -67,7 +72,7 @@ export class VouchersController {
   update(
     @Param('id') id: string,
     @Body() dto: UpdateVoucherDto,
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
   ) {
     return this.vouchersService.update(id, dto, req.user.id);
   }

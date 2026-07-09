@@ -41,9 +41,7 @@ export class AuthController {
   // @UseGuards(CustomerJwtAuthGuard)
   // zaloMiniAppGetPhone(@Body() dto: ZaloPhoneDto, @Req() req)
   // Dùng tạm body parameter thay req cho đơn giản nếu chưa cài Guard đầy đủ
-  zaloMiniAppGetPhone(
-    @Body() dto: ZaloPhoneDto,
-  ) {
+  zaloMiniAppGetPhone(@Body() dto: ZaloPhoneDto) {
     return this.authService.zaloMiniAppGetPhone(
       dto.customerId,
       dto.access_token,

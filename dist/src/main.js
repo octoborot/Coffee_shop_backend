@@ -22,7 +22,9 @@ async function bootstrap() {
         catch(exception, host) {
             const ctx = host.switchToHttp();
             const response = ctx.getResponse();
-            const status = exception instanceof common_1.HttpException ? exception.getStatus() : common_1.HttpStatus.INTERNAL_SERVER_ERROR;
+            const status = exception instanceof common_1.HttpException
+                ? exception.getStatus()
+                : common_1.HttpStatus.INTERNAL_SERVER_ERROR;
             console.error('Unhandled Exception:', exception);
             response.status(status).json({
                 statusCode: status,

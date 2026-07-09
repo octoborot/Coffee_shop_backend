@@ -21,6 +21,7 @@ const notifications_module_1 = require("./notifications/notifications.module");
 const gateway_module_1 = require("./gateway/gateway.module");
 const vouchers_module_1 = require("./vouchers/vouchers.module");
 const zalopay_module_1 = require("./zalopay/zalopay.module");
+const cart_module_1 = require("./cart/cart.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -38,6 +39,7 @@ exports.AppModule = AppModule = __decorate([
             gateway_module_1.GatewayModule,
             vouchers_module_1.VouchersModule,
             zalopay_module_1.ZaloPayModule,
+            cart_module_1.CartModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
