@@ -75,6 +75,26 @@ export class AuthService {
 
   // ─── Zalo Mini App SDK Login (Direct Access Token) ──────────────────────────
   async zaloMiniAppLogin(accessToken: string) {
+    // -------------------------------------------------------------
+    // HỖ TRỢ MÔI TRƯỜNG TEST CỦA ZALO (khi Zalo App chưa được kích hoạt)
+    // -------------------------------------------------------------
+    if (accessToken === 'test') {
+      let customer = await this.authRepository.findCustomerByZaloId('mock_zalo_test');
+      if (!customer) {
+        customer = await this.authRepository.createCustomer({
+          zalo_id: 'mock_zalo_test',
+          name: 'Tài khoản Test (Zalo)',
+          avatar_text: 'T',
+        });
+      }
+      const jwtToken = this.jwtService.sign({
+        sub: customer.id,
+        role: 'customer',
+      });
+      return { access_token: jwtToken, customer };
+    }
+    // -------------------------------------------------------------
+
     let zaloUser: any;
     try {
       const userRes = await axios.get('https://graph.zalo.me/v2.0/me', {

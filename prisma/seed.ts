@@ -135,6 +135,58 @@ async function main() {
   } else {
     console.log(`ℹ️  Đã có sẵn ${productCount} sản phẩm trong database, bỏ qua bước tạo sản phẩm.`);
   }
+  // 3. Thêm dữ liệu Store Locations mẫu
+  const storeCount = await prisma.storeLocation.count();
+  if (storeCount === 0) {
+    console.log('⏳ Đang tạo dữ liệu cửa hàng mẫu...');
+    await prisma.storeLocation.createMany({
+      data: [
+        {
+          name: "Brew & Bloom Lý Tự Trọng",
+          address: "24 Lý Tự Trọng, Quận 1, TP. HCM",
+          phone: "0901234567",
+          is_active: true
+        },
+        {
+          name: "Brew & Bloom Lê Lợi",
+          address: "12 Lê Lợi, Quận 1, TP. HCM",
+          phone: "0901234568",
+          is_active: true
+        }
+      ]
+    });
+    console.log('✅ Đã tạo thành công dữ liệu cửa hàng!');
+  }
+
+  // 4. Thêm dữ liệu Vouchers mẫu
+  const voucherCount = await prisma.voucher.count();
+  if (voucherCount === 0) {
+    console.log('⏳ Đang tạo dữ liệu voucher mẫu...');
+    await prisma.voucher.createMany({
+      data: [
+        {
+          code: "WELCOME10",
+          title: "Giảm 10% cho thành viên mới",
+          description: "Giảm tối đa 20.000đ cho đơn từ 50.000đ",
+          discount_type: "PERCENT",
+          discount_value: 10,
+          min_order_vnd: 50000,
+          max_discount_vnd: 20000,
+          is_active: true
+        },
+        {
+          code: "FREESHIP",
+          title: "Miễn phí vận chuyển",
+          description: "Giảm 15.000đ phí vận chuyển cho đơn từ 100.000đ",
+          discount_type: "FIXED_AMOUNT",
+          discount_value: 15000,
+          min_order_vnd: 100000,
+          is_active: true
+        }
+      ]
+    });
+    console.log('✅ Đã tạo thành công dữ liệu voucher!');
+  }
 }
 
 

@@ -11,6 +11,7 @@ import {
   IsNotEmpty,
   IsUUID,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OrderType, PaymentMethod } from '@prisma/client';
 
@@ -54,6 +55,7 @@ export class CreateOrderDto {
 
   @ApiPropertyOptional({ description: 'ID sổ địa chỉ (nếu có)' })
   @IsOptional()
+  @Transform(({ value }) => (value === '' || value === 'string' ? undefined : value))
   @IsUUID()
   customer_address_id?: string;
 
@@ -61,11 +63,13 @@ export class CreateOrderDto {
     description: 'ID cửa hàng nhận món (nếu type = Pickup)',
   })
   @IsOptional()
+  @Transform(({ value }) => (value === '' || value === 'string' ? undefined : value))
   @IsUUID()
   store_location_id?: string;
 
   @ApiPropertyOptional({ description: 'ID của voucher áp dụng' })
   @IsOptional()
+  @Transform(({ value }) => (value === '' || value === 'string' ? undefined : value))
   @IsUUID()
   voucher_id?: string;
 

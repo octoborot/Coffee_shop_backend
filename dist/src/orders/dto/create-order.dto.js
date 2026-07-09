@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateOrderDto = exports.OrderItemDto = void 0;
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
+const class_transformer_2 = require("class-transformer");
 const swagger_1 = require("@nestjs/swagger");
 const client_1 = require("@prisma/client");
 class OrderItemDto {
@@ -76,6 +77,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'ID sổ địa chỉ (nếu có)' }),
     (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_2.Transform)(({ value }) => (value === '' || value === 'string' ? undefined : value)),
     (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "customer_address_id", void 0);
@@ -84,12 +86,14 @@ __decorate([
         description: 'ID cửa hàng nhận món (nếu type = Pickup)',
     }),
     (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_2.Transform)(({ value }) => (value === '' || value === 'string' ? undefined : value)),
     (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "store_location_id", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'ID của voucher áp dụng' }),
     (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_2.Transform)(({ value }) => (value === '' || value === 'string' ? undefined : value)),
     (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "voucher_id", void 0);
