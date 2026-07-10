@@ -156,12 +156,16 @@ export class AuthService {
 
       const data = response.data;
       if (data.error) {
-        throw new BadRequestException(`Lỗi giải mã số điện thoại: ${data.message}`);
+        throw new BadRequestException(
+          `Lỗi giải mã số điện thoại: ${data.message}`,
+        );
       }
 
       const phone = data.data?.number;
       if (!phone) {
-        throw new BadRequestException('Không tìm thấy số điện thoại trong payload.');
+        throw new BadRequestException(
+          'Không tìm thấy số điện thoại trong payload.',
+        );
       }
 
       // Cập nhật số điện thoại cho Customer
@@ -170,7 +174,9 @@ export class AuthService {
       return { phone, message: 'Cập nhật số điện thoại thành công' };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
-      throw new BadRequestException('Không thể gọi API Zalo để lấy số điện thoại.');
+      throw new BadRequestException(
+        'Không thể gọi API Zalo để lấy số điện thoại.',
+      );
     }
   }
 

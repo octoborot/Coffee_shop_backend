@@ -16,7 +16,11 @@ import { CreateNotificationDto } from './dto/create-notification.dto';
 import { UpdateNotificationDto } from './dto/update-notification.dto';
 import { GetNotificationsQueryDto } from './dto/get-notifications-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-
+type AuthenticatedRequest = {
+  user: {
+    id: string;
+  };
+};
 @ApiTags('Notifications')
 @Controller('api/v1')
 export class NotificationsController {
@@ -28,7 +32,10 @@ export class NotificationsController {
   @ApiOperation({
     summary: 'Lấy thông báo của customer kèm thông báo hệ thống',
   })
-  findForCustomer(@Request() req, @Query() query: GetNotificationsQueryDto) {
+  findForCustomer(
+    @Request() req: AuthenticatedRequest,
+    @Query() query: GetNotificationsQueryDto,
+  ) {
     return this.notificationsService.findForCustomer(req.user.id, query);
   }
 
@@ -60,7 +67,10 @@ export class NotificationsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Tạo thông báo (Admin)' })
-  create(@Body() dto: CreateNotificationDto, @Request() req) {
+  create(
+    @Body() dto: CreateNotificationDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
     return this.notificationsService.create(dto, req.user.id);
   }
 
