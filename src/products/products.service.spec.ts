@@ -30,6 +30,7 @@ describe('ProductsService', () => {
     repository = {
       findAll: jest.fn(),
       findById: jest.fn(),
+      findTags: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
@@ -83,6 +84,12 @@ describe('ProductsService', () => {
     expect(repository.findById).toHaveBeenCalledWith('product-1');
     expect(result.tags).toEqual(['Best Seller', 'Bán Chạy']);
     expect(result.priceVnd).toBe(45000);
+  });
+
+  it('returns product tags for filtering', async () => {
+    repository.findTags.mockResolvedValue(['Bán Chạy', 'Món Mới']);
+
+    await expect(service.findTags()).resolves.toEqual(['Bán Chạy', 'Món Mới']);
   });
 
   it('throws NotFoundException when product does not exist', async () => {

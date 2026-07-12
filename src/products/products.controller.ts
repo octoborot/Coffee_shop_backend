@@ -3,14 +3,25 @@ import {
   Controller,
   Delete,
   Get,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   Patch,
   Post,
   Query,
   Request,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
 import { GetProductsQueryDto } from './dto/get-products-query.dto';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -18,6 +29,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateProductTagDto } from './dto/create-product-tag.dto';
 import { UpdateProductTagDto } from './dto/update-product-tag.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CloudinaryService } from './cloudinary.service';
 
 type AuthenticatedRequest = {
   user: {
@@ -27,12 +39,58 @@ type AuthenticatedRequest = {
 @ApiTags('Products')
 @Controller('api/v1/products') // Đổi đường dẫn cho đồng bộ với API khác
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(
+    private readonly productsService: ProductsService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Lấy danh sách sản phẩm cho Mini App ProductCard' })
   findAll(@Query() query: GetProductsQueryDto) {
     return this.productsService.findAll(query);
+  }
+
+  @Get('tags')
+  @ApiOperation({ summary: 'Lấy danh sách tag sản phẩm để lọc' })
+  findTags() {
+    return this.productsService.findTags();
+  }
+
+  @Post('images')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_request, file, callback) => {
+        callback(null, /^image\/(jpeg|png|webp|gif)$/.test(file.mimetype));
+      },
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiOperation({ summary: 'Tải ảnh sản phẩm lên Cloudinary (Admin)' })
+  async uploadImage(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 })],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    const result = await this.cloudinaryService.uploadProductImage(file);
+    return {
+      url: result.secure_url,
+      publicId: result.public_id,
+      width: result.width,
+      height: result.height,
+    };
   }
 
   @Get(':id')

@@ -37,8 +37,12 @@ export class ProductsRepository {
             OR: [
               { name: { contains: search, mode: 'insensitive' } },
               { subname: { contains: search, mode: 'insensitive' } },
-              { description: { contains: search, mode: 'insensitive' } },
               { details: { contains: search, mode: 'insensitive' } },
+              {
+                tags: {
+                  some: { name: { contains: search, mode: 'insensitive' } },
+                },
+              },
             ],
           }
         : {}),
@@ -67,6 +71,15 @@ export class ProductsRepository {
     });
   }
 
+  async findTags() {
+    const tags = await this.prisma.productTag.findMany({
+      distinct: ['name'],
+      orderBy: { name: 'asc' },
+      select: { name: true },
+    });
+    return tags.map((tag) => tag.name);
+  }
+
   create(data: CreateProductDto, adminId?: string) {
     const { tags, ...productData } = data;
 
@@ -91,13 +104,26 @@ export class ProductsRepository {
 
   update(id: string, data: UpdateProductDto, adminId?: string) {
     const { tags, ...productData } = data;
-    void tags;
 
     return this.prisma.product.update({
       where: { id },
       data: {
         ...productData,
         updated_by_admin_id: adminId,
+        ...(tags
+          ? {
+              tags: {
+                deleteMany: {},
+                create: [...new Set(tags.map((name) => name.trim()))]
+                  .filter(Boolean)
+                  .map((name) => ({
+                    name,
+                    created_by_admin_id: adminId,
+                    updated_by_admin_id: adminId,
+                  })),
+              },
+            }
+          : {}),
       },
       include: { tags: { orderBy: { name: 'asc' } } },
     });
