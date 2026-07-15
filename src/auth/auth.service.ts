@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { AuthRepository } from './auth.repository';
 
 @Injectable()
@@ -15,7 +16,7 @@ export class AuthService {
     private readonly authRepository: AuthRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   // ─── Zalo Mini App Login ────────────────────────────────────────────────────
   async zaloLogin(code: string) {
@@ -43,12 +44,21 @@ export class AuthService {
     // Bước 2: Dùng access_token lấy thông tin user
     let zaloUser: { id: string; name: string };
     try {
+      const appsecret_proof = crypto
+        .createHmac('sha256', secretKey || '')
+        .update(accessToken)
+        .digest('hex');
+
       const userRes = await axios.get('https://graph.zalo.me/v2.0/me', {
         params: { fields: 'id,name,picture' },
-        headers: { access_token: accessToken },
+        headers: {
+          access_token: accessToken,
+          appsecret_proof: appsecret_proof,
+        },
       });
       zaloUser = userRes.data;
-    } catch {
+    } catch (err) {
+      console.error('Error fetching Zalo profile in zaloLogin:', err?.response?.data || err);
       throw new BadRequestException(
         'Không thể lấy thông tin người dùng từ Zalo.',
       );
@@ -75,34 +85,28 @@ export class AuthService {
 
   // ─── Zalo Mini App SDK Login (Direct Access Token) ──────────────────────────
   async zaloMiniAppLogin(accessToken: string) {
-    // -------------------------------------------------------------
-    // HỖ TRỢ MÔI TRƯỜNG TEST CỦA ZALO (khi Zalo App chưa được kích hoạt)
-    // -------------------------------------------------------------
-    if (accessToken === 'test') {
-      let customer = await this.authRepository.findCustomerByZaloId('mock_zalo_test');
-      if (!customer) {
-        customer = await this.authRepository.createCustomer({
-          zalo_id: 'mock_zalo_test',
-          name: 'Tài khoản Test (Zalo)',
-          avatar_text: 'T',
-        });
-      }
-      const jwtToken = this.jwtService.sign({
-        sub: customer.id,
-        role: 'customer',
-      });
-      return { access_token: jwtToken, customer };
+    if (!accessToken) {
+      throw new BadRequestException('Access token không được để trống.');
     }
-    // -------------------------------------------------------------
 
     let zaloUser: any;
     try {
+      const appSecret = this.configService.get<string>('ZALO_APP_SECRET');
+      const appsecret_proof = crypto
+        .createHmac('sha256', appSecret || '')
+        .update(accessToken)
+        .digest('hex');
+
       const userRes = await axios.get('https://graph.zalo.me/v2.0/me', {
         params: { fields: 'id,name,picture' },
-        headers: { access_token: accessToken },
+        headers: {
+          access_token: accessToken,
+          appsecret_proof: appsecret_proof,
+        },
       });
       zaloUser = userRes.data;
-    } catch {
+    } catch (err) {
+      console.error('Error fetching Zalo profile in zaloMiniAppLogin:', err?.response?.data || err);
       throw new BadRequestException(
         'Không thể lấy thông tin người dùng từ Zalo. Access Token không hợp lệ.',
       );

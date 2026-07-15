@@ -3,10 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   findCustomerByZaloId(zaloId: string) {
-    return this.prisma.customer.findUnique({
+    return this.prisma.customer.findFirst({
       where: { zalo_id: zaloId },
     });
   }
