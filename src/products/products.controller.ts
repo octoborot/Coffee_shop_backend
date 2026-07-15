@@ -29,7 +29,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateProductTagDto } from './dto/create-product-tag.dto';
 import { UpdateProductTagDto } from './dto/update-product-tag.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CloudinaryService } from './cloudinary.service';
+import { CloudinaryService } from '../media/cloudinary.service';
 
 type AuthenticatedRequest = {
   user: {

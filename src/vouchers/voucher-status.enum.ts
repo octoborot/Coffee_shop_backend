@@ -1,0 +1,7 @@
+export enum VoucherStatus {
+  RUNNING = 'RUNNING',
+  SCHEDULED = 'SCHEDULED',
+  PAUSED = 'PAUSED',
+  EXPIRED = 'EXPIRED',
+  EXHAUSTED = 'EXHAUSTED',
+}

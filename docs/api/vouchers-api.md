@@ -11,6 +11,22 @@ Module này quản lý voucher/chương trình khuyến mãi.
 - Mini App dùng API public để lấy voucher đang hoạt động.
 - Admin dùng API protected để quản lý toàn bộ voucher.
 
+Ảnh voucher được tải lên Cloudinary qua API admin. Backend chịu trách nhiệm
+tìm kiếm, lọc, phân trang, xác định trạng thái nghiệp vụ và tổng hợp thống kê.
+
+### VoucherStatus
+
+```text
+RUNNING
+SCHEDULED
+PAUSED
+EXPIRED
+EXHAUSTED
+```
+
+Thứ tự xác định trạng thái: `PAUSED`, `SCHEDULED`, `EXPIRED`, `EXHAUSTED`,
+cuối cùng là `RUNNING`.
+
 ## Enums
 
 ### DiscountType
@@ -41,6 +57,7 @@ Pastry
   "title": "Mua 1 tặng 1",
   "description": "Áp dụng cho Coffee và Tea.",
   "image": "https://example.com/voucher.jpg",
+  "image_public_id": "coffee-shop/vouchers/hotdeal",
   "discount_type": "BUY_ONE_GET_ONE",
   "discount_value": 0,
   "min_order_vnd": 0,
@@ -51,6 +68,7 @@ Pastry
   "usage_limit": 100,
   "used_count": 0,
   "is_active": true,
+  "status": "RUNNING",
   "created_at": "2026-07-07T10:00:00.000Z",
   "updated_at": "2026-07-07T10:00:00.000Z"
 }
@@ -77,7 +95,14 @@ ends_at >= now hoặc ends_at = null
 | `discount_type` | `DiscountType` | No | Lọc theo loại giảm giá |
 | `category` | `ProductCategory` | No | Lọc voucher áp dụng cho category |
 | `is_active` | `boolean` | No | Lọc trạng thái active |
+| `status` | `VoucherStatus` | No | Lọc theo trạng thái nghiệp vụ |
 | `search` | `string` | No | Tìm theo `code`, `title`, `description` |
+| `starts_from` | `ISO date string` | No | Bắt đầu từ thời điểm |
+| `starts_to` | `ISO date string` | No | Bắt đầu trước thời điểm |
+| `ends_from` | `ISO date string` | No | Kết thúc từ thời điểm |
+| `ends_to` | `ISO date string` | No | Kết thúc trước thời điểm |
+| `sort_by` | `string` | No | `created_at`, `updated_at`, `starts_at`, `ends_at`, `used_count`, `code` |
+| `sort_order` | `asc \| desc` | No | Mặc định `desc` |
 | `page` | `number` | No | Trang hiện tại, mặc định `1` |
 | `limit` | `number` | No | Số item/trang, mặc định `10`, tối đa `50` |
 
@@ -129,7 +154,54 @@ Status: `200 OK`
     "limit": 10,
     "total": 1,
     "totalPages": 1
+  },
+  "summary": {
+    "total": 1,
+    "running": 1,
+    "scheduled": 0,
+    "paused": 0,
+    "expired": 0,
+    "exhausted": 0,
+    "totalUsedCount": 0
   }
+}
+```
+
+`summary` áp dụng bộ lọc tìm kiếm, loại giảm giá, danh mục và thời gian nhưng
+không áp dụng `status`/`is_active`, nhờ đó admin vẫn thấy tổng quan các trạng thái.
+
+## POST /api/v1/admin/vouchers/images
+
+Tải ảnh voucher lên Cloudinary. Auth Bearer token bắt buộc. Request dùng
+`multipart/form-data`, field `file`; hỗ trợ JPEG, PNG, WebP, GIF, tối đa 5 MB.
+
+```json
+{
+  "url": "https://res.cloudinary.com/example/image/upload/voucher.webp",
+  "publicId": "coffee-shop/vouchers/hotdeal",
+  "width": 1600,
+  "height": 900
+}
+```
+
+## DELETE /api/v1/admin/vouchers/images
+
+Xóa ảnh voucher tạm chưa gắn với voucher. Chỉ chấp nhận public ID thuộc thư mục
+`coffee-shop/vouchers/`.
+
+```json
+{
+  "public_id": "coffee-shop/vouchers/hotdeal"
+}
+```
+
+## PATCH /api/v1/admin/vouchers/:id/status
+
+Bật hoặc tắt voucher bằng endpoint riêng cho switch trạng thái.
+
+```json
+{
+  "is_active": false
 }
 ```
 
