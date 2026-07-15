@@ -229,6 +229,7 @@ model Voucher {
   title                 String            @db.VarChar
   description           String?           @db.Text
   image                 String?           @db.Text
+  image_public_id       String?           @db.Text
   discount_type         DiscountType
   discount_value        Int               @default(0)
   min_order_vnd         Int               @default(0)

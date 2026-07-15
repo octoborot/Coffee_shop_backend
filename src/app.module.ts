@@ -13,10 +13,12 @@ import { GatewayModule } from './gateway/gateway.module';
 import { VouchersModule } from './vouchers/vouchers.module';
 import { ZaloPayModule } from './zalopay/zalopay.module';
 import { CartModule } from './cart/cart.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    MediaModule,
     PrismaModule,
     AuthModule,
     AdminModule,

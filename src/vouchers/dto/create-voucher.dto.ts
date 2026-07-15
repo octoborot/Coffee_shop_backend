@@ -8,6 +8,8 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUrl,
+  Matches,
   Min,
 } from 'class-validator';
 
@@ -27,8 +29,18 @@ export class CreateVoucherDto {
 
   @ApiPropertyOptional({ example: 'https://example.com/voucher.jpg' })
   @IsOptional()
-  @IsString()
+  @IsUrl({ require_protocol: true })
   image?: string;
+
+  @ApiPropertyOptional({
+    example: 'coffee-shop/vouchers/bloom20',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^coffee-shop\/vouchers\/[A-Za-z0-9/_-]+$/, {
+    message: 'image_public_id phải thuộc thư mục coffee-shop/vouchers/.',
+  })
+  image_public_id?: string;
 
   @ApiProperty({ enum: DiscountType })
   @IsEnum(DiscountType)
