@@ -2,10 +2,12 @@ import { NotFoundException } from '@nestjs/common';
 import { Prisma, ProductCategory, ProductStatus } from '@prisma/client';
 import { ProductsRepository } from './products.repository';
 import { ProductsService } from './products.service';
+import { CloudinaryService } from '../media/cloudinary.service';
 
 describe('ProductsService', () => {
   let service: ProductsService;
   let repository: jest.Mocked<ProductsRepository>;
+  let cloudinaryService: jest.Mocked<CloudinaryService>;
 
   const product = {
     id: 'product-1',
@@ -18,6 +20,7 @@ describe('ProductsService', () => {
     price_vnd: 45000,
     rating: new Prisma.Decimal(4.8),
     image: 'https://example.com/caramel.jpg',
+    image_public_id: 'coffee-shop/products/caramel',
     status: ProductStatus.Available,
     details: 'Size M',
     description: 'Coffee with caramel.',
@@ -39,7 +42,10 @@ describe('ProductsService', () => {
       deleteTag: jest.fn(),
     } as unknown as jest.Mocked<ProductsRepository>;
 
-    service = new ProductsService(repository);
+    cloudinaryService = {
+      deleteProductImage: jest.fn(),
+    } as unknown as jest.Mocked<CloudinaryService>;
+    service = new ProductsService(repository, cloudinaryService);
   });
 
   it('returns paginated product cards', async () => {
@@ -65,7 +71,8 @@ describe('ProductsService', () => {
           price: 1.8,
           priceVnd: 45000,
           rating: 4.8,
-          image: 'https://example.com/caramel.jpg',
+           image: 'https://example.com/caramel.jpg',
+           image_public_id: 'coffee-shop/products/caramel',
           status: ProductStatus.Available,
           details: 'Size M',
           description: 'Coffee with caramel.',
@@ -155,6 +162,31 @@ describe('ProductsService', () => {
       message: 'Đã xóa sản phẩm thành công.',
     });
     expect(repository.delete).toHaveBeenCalledWith('product-1');
+    expect(cloudinaryService.deleteProductImage).toHaveBeenCalledWith(
+      'coffee-shop/products/caramel',
+    );
+  });
+
+  it('deletes the previous Cloudinary image after replacing it', async () => {
+    repository.findById.mockResolvedValue(product as any);
+    repository.update.mockResolvedValue({
+      ...product,
+      image: 'https://example.com/new.jpg',
+      image_public_id: 'coffee-shop/products/new',
+    } as any);
+
+    await service.update(
+      'product-1',
+      {
+        image: 'https://example.com/new.jpg',
+        image_public_id: 'coffee-shop/products/new',
+      },
+      'admin-1',
+    );
+
+    expect(cloudinaryService.deleteProductImage).toHaveBeenCalledWith(
+      'coffee-shop/products/caramel',
+    );
   });
 
   it('creates product tag after product exists', async () => {

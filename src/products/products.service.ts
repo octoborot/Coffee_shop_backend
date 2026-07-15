@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ProductsRepository } from './products.repository';
 import { Product } from '@prisma/client';
 import { GetProductsQueryDto } from './dto/get-products-query.dto';
@@ -6,6 +6,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateProductTagDto } from './dto/create-product-tag.dto';
 import { UpdateProductTagDto } from './dto/update-product-tag.dto';
+import { CloudinaryService } from '../media/cloudinary.service';
 
 type ProductWithTags = Product & {
   tags: { name: string }[];
@@ -13,7 +14,12 @@ type ProductWithTags = Product & {
 
 @Injectable()
 export class ProductsService {
-  constructor(private readonly productsRepository: ProductsRepository) {}
+  private readonly logger = new Logger(ProductsService.name);
+
+  constructor(
+    private readonly productsRepository: ProductsRepository,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   private toProductCard(product: ProductWithTags) {
     return {
@@ -25,6 +31,8 @@ export class ProductsService {
       priceVnd: product.price_vnd,
       rating: product.rating ? Number(product.rating) : null,
       image: product.image,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      image_public_id: product.image_public_id,
       status: product.status,
       details: product.details,
       description: product.description,
@@ -73,14 +81,26 @@ export class ProductsService {
   }
 
   async update(id: string, dto: UpdateProductDto, adminId?: string) {
-    await this.ensureProductExists(id);
+    const current = await this.ensureProductExists(id);
     const product = await this.productsRepository.update(id, dto, adminId);
+    if (
+      current.image_public_id &&
+      dto.image_public_id !== undefined &&
+      dto.image_public_id !== current.image_public_id
+    ) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      await this.deleteImageWithoutFailingRequest(current.image_public_id);
+    }
     return this.toProductCard(product);
   }
 
   async remove(id: string) {
-    await this.ensureProductExists(id);
+    const product = await this.ensureProductExists(id);
     await this.productsRepository.delete(id);
+    if (product.image_public_id) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      await this.deleteImageWithoutFailingRequest(product.image_public_id);
+    }
     return { message: 'Đã xóa sản phẩm thành công.' };
   }
 
@@ -111,5 +131,13 @@ export class ProductsService {
       throw new NotFoundException(`Sản phẩm với ID ${id} không tồn tại`);
     }
     return product;
+  }
+
+  private async deleteImageWithoutFailingRequest(publicId: string) {
+    try {
+      await this.cloudinaryService.deleteProductImage(publicId);
+    } catch (error) {
+      this.logger.error(`Không thể xóa ảnh Cloudinary ${publicId}`, error);
+    }
   }
 }

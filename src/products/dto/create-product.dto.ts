@@ -8,6 +8,8 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
+  Matches,
   Max,
   Min,
 } from 'class-validator';
@@ -46,8 +48,18 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({ example: 'https://example.com/caramel.jpg' })
   @IsOptional()
-  @IsString()
+  @IsUrl({ require_protocol: true })
   image?: string;
+
+  @ApiPropertyOptional({
+    example: 'coffee-shop/products/caramel-macchiato',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^coffee-shop\/products\/[A-Za-z0-9/_-]+$/, {
+    message: 'image_public_id phải thuộc thư mục coffee-shop/products/.',
+  })
+  image_public_id?: string;
 
   @ApiPropertyOptional({
     enum: ProductStatus,
