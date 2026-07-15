@@ -30,6 +30,7 @@ import { CreateProductTagDto } from './dto/create-product-tag.dto';
 import { UpdateProductTagDto } from './dto/update-product-tag.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CloudinaryService } from '../media/cloudinary.service';
+import { DeleteProductImageDto } from './dto/delete-product-image.dto';
 
 type AuthenticatedRequest = {
   user: {
@@ -91,6 +92,15 @@ export class ProductsController {
       width: result.width,
       height: result.height,
     };
+  }
+
+  @Delete('images')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Xóa ảnh sản phẩm tạm trên Cloudinary (Admin)' })
+  async deleteImage(@Body() dto: DeleteProductImageDto) {
+    await this.cloudinaryService.deleteProductImage(dto.public_id);
+    return { message: 'Đã xóa ảnh sản phẩm.' };
   }
 
   @Get(':id')

@@ -6,6 +6,34 @@ Base URL:
 /api/v1/products
 ```
 
+Ảnh sản phẩm được tải lên Cloudinary qua API admin. Response sản phẩm có
+`image` để hiển thị và `image_public_id` để backend quản lý vòng đời file.
+
+## POST /api/v1/products/images
+
+Tải ảnh sản phẩm lên Cloudinary. Auth Bearer token bắt buộc. Request dùng
+`multipart/form-data`, field `file`; hỗ trợ JPEG, PNG, WebP, GIF, tối đa 5 MB.
+
+```json
+{
+  "url": "https://res.cloudinary.com/example/image/upload/product.webp",
+  "publicId": "coffee-shop/products/caramel-macchiato",
+  "width": 1200,
+  "height": 1200
+}
+```
+
+## DELETE /api/v1/products/images
+
+Xóa ảnh sản phẩm tạm chưa gắn vào sản phẩm. Chỉ chấp nhận public ID thuộc
+thư mục `coffee-shop/products/`.
+
+```json
+{
+  "public_id": "coffee-shop/products/caramel-macchiato"
+}
+```
+
 Module này phục vụ hai nhóm chức năng:
 
 - Mini App đọc danh sách sản phẩm để render `ProductCard`.

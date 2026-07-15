@@ -37,8 +37,16 @@ export class CloudinaryService {
   }
 
   async deleteVoucherImage(publicId: string) {
-    if (!publicId.startsWith('coffee-shop/vouchers/')) {
-      throw new BadRequestException('Public ID của ảnh voucher không hợp lệ.');
+    return this.deleteImage(publicId, 'coffee-shop/vouchers/');
+  }
+
+  async deleteProductImage(publicId: string) {
+    return this.deleteImage(publicId, 'coffee-shop/products/');
+  }
+
+  private async deleteImage(publicId: string, folder: string) {
+    if (!publicId.startsWith(folder)) {
+      throw new BadRequestException('Public ID của ảnh không hợp lệ.');
     }
     this.ensureConfigured();
     await cloudinary.uploader.destroy(publicId, {

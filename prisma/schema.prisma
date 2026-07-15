@@ -140,6 +140,7 @@ model Product {
   price_vnd           Int
   rating              Decimal?        @db.Decimal(2, 1)
   image               String?         @db.Text
+  image_public_id     String?         @db.Text
   status              ProductStatus   @default(Available)
   details             String?         @db.Text
   description         String?         @db.Text
