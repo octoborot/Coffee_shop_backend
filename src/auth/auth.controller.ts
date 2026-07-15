@@ -9,7 +9,7 @@ import { AdminLoginDto } from './dto/admin-login.dto';
 @ApiTags('Auth')
 @Controller('api/v1/auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('zalo-login')
   @ApiOperation({ summary: 'Đăng nhập qua Zalo Mini App (Customer)' })
