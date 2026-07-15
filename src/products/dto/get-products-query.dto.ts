@@ -16,11 +16,17 @@ export class GetProductsQueryDto {
 
   @ApiPropertyOptional({ example: 'Best Seller' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() || undefined : undefined,
+  )
   @IsString()
   tag?: string;
 
   @ApiPropertyOptional({ example: 'matcha' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() || undefined : undefined,
+  )
   @IsString()
   search?: string;
 

@@ -55,6 +55,10 @@ export class ProductsService {
     };
   }
 
+  findTags() {
+    return this.productsRepository.findTags();
+  }
+
   async findOne(id: string) {
     const product = await this.productsRepository.findById(id);
     if (!product) {

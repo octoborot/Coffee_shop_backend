@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../../prisma/prisma.service';
 
 export interface JwtPayload {
   sub: string; // user id (customer or admin)
@@ -11,7 +12,10 @@ export interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -20,6 +24,26 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
-    return { id: payload.sub, role: payload.role, username: payload.username };
+    if (payload.role === 'admin') {
+      const admin = await this.prisma.adminUser.findUnique({
+        where: { id: payload.sub },
+        select: { id: true, role: true, username: true },
+      });
+      if (!admin)
+        throw new UnauthorizedException('Phiên đăng nhập đã hết hạn.');
+      return {
+        id: admin.id,
+        role: admin.role.toLowerCase(),
+        username: admin.username,
+      };
+    }
+
+    const customer = await this.prisma.customer.findUnique({
+      where: { id: payload.sub },
+      select: { id: true },
+    });
+    if (!customer)
+      throw new UnauthorizedException('Phiên đăng nhập đã hết hạn.');
+    return { id: customer.id, role: 'customer' };
   }
 }
