@@ -28,7 +28,7 @@ export class AuthController {
     description: 'Trả về JWT token và thông tin Customer',
   })
   zaloMiniAppLogin(@Body() dto: ZaloMiniAppLoginDto) {
-    return this.authService.zaloMiniAppLogin(dto.access_token);
+    return this.authService.zaloMiniAppLogin(dto);
   }
 
   @Post('zalo-miniapp/phone')

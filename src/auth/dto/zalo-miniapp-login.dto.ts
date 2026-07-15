@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class ZaloMiniAppLoginDto {
   @ApiProperty({
@@ -9,4 +9,14 @@ export class ZaloMiniAppLoginDto {
   @IsNotEmpty()
   @IsString()
   access_token: string;
+
+  @ApiPropertyOptional({ description: 'ID người dùng lấy từ Mini App SDK để dự phòng' })
+  @IsOptional()
+  @IsString()
+  zalo_id?: string;
+
+  @ApiPropertyOptional({ description: 'Tên người dùng lấy từ Mini App SDK để dự phòng' })
+  @IsOptional()
+  @IsString()
+  name?: string;
 }

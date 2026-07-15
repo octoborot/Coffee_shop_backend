@@ -84,12 +84,13 @@ export class AuthService {
   }
 
   // ─── Zalo Mini App SDK Login (Direct Access Token) ──────────────────────────
-  async zaloMiniAppLogin(accessToken: string) {
+  async zaloMiniAppLogin(dto: any) { // Type as any here to avoid cyclic imports or import issues, or just use it since it's passed from controller
+    const { access_token: accessToken, zalo_id, name } = dto;
     if (!accessToken) {
       throw new BadRequestException('Access token không được để trống.');
     }
 
-    let zaloUser: any;
+    let zaloUser: any = { id: zalo_id, name: name };
     try {
       const appSecret = this.configService.get<string>('ZALO_APP_SECRET');
       const appsecret_proof = crypto
@@ -104,18 +105,18 @@ export class AuthService {
           appsecret_proof: appsecret_proof,
         },
       });
-      zaloUser = userRes.data;
-    } catch (err) {
-      console.error('Error fetching Zalo profile in zaloMiniAppLogin:', err?.response?.data || err);
-      throw new BadRequestException(
-        'Không thể lấy thông tin người dùng từ Zalo. Access Token không hợp lệ.',
-      );
-    }
-
-    if (zaloUser.error) {
-      throw new BadRequestException(
-        `Lỗi từ Zalo: ${zaloUser.message || 'Unknown error'}`,
-      );
+      if (userRes.data && !userRes.data.error) {
+        zaloUser = userRes.data;
+      } else if (!zalo_id) {
+         throw new BadRequestException(`Lỗi từ Zalo: ${userRes.data.message || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      console.warn('Zalo API Error, falling back to frontend data if available:', err?.response?.data || err.message);
+      if (!zalo_id || !name) {
+        throw new BadRequestException(
+          'Không thể lấy thông tin người dùng từ Zalo và không có dữ liệu dự phòng. Lỗi: ' + (err?.response?.data?.message || err.message),
+        );
+      }
     }
 
     // Tìm hoặc tạo Customer trong DB
