@@ -9,7 +9,7 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
   cors: { origin: '*' },
-  namespace: '/admin',
+  namespace: '/orders',
 })
 export class OrdersGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -18,11 +18,11 @@ export class OrdersGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private logger = new Logger('OrdersGateway');
 
   handleConnection(client: Socket) {
-    this.logger.log(`Admin client connected: ${client.id}`);
+    this.logger.log(`Orders client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
-    this.logger.log(`Admin client disconnected: ${client.id}`);
+    this.logger.log(`Orders client disconnected: ${client.id}`);
   }
 
   /**
@@ -32,5 +32,10 @@ export class OrdersGateway implements OnGatewayConnection, OnGatewayDisconnect {
   emitNewOrder(order: any) {
     this.server.emit('new-order', order);
     this.logger.log(`Emitted new-order: ${order.id}`);
+  }
+
+  emitOrderUpdated(order: any) {
+    this.server.emit('order-updated', order);
+    this.logger.log(`Emitted order-updated: ${order.id}`);
   }
 }

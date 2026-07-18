@@ -19,6 +19,7 @@ import { OrderStatus } from '@prisma/client';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { UpdateOrderPaymentStatusDto } from './dto/update-order-payment-status.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Orders')
@@ -69,6 +70,14 @@ export class OrdersController {
     return this.ordersService.getAdminOrders(status);
   }
 
+  @Get('admin/orders/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Lấy chi tiết 1 đơn hàng (Admin)' })
+  getAdminOrderById(@Param('id') id: string) {
+    return this.ordersService.getOrderById(id);
+  }
+
   @Patch('admin/orders/:id/status')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -78,5 +87,16 @@ export class OrdersController {
     @Body() dto: UpdateOrderStatusDto,
   ) {
     return this.ordersService.updateOrderStatus(id, dto);
+  }
+
+  @Patch('admin/orders/:id/payment-status')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cập nhật trạng thái thanh toán đơn hàng (Admin)' })
+  updateOrderPaymentStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateOrderPaymentStatusDto,
+  ) {
+    return this.ordersService.updateOrderPaymentStatus(id, dto);
   }
 }

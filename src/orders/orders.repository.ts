@@ -137,4 +137,12 @@ export class OrdersRepository {
       data: { status },
     });
   }
+
+  // ─── Cập nhật trạng thái thanh toán ──────────────────────────────────────────
+  updatePaymentStatus(id: string, paymentStatus: PaymentStatus) {
+    return this.prisma.order.update({
+      where: { id },
+      data: { payment_status: paymentStatus },
+    });
+  }
 }

@@ -9,6 +9,7 @@ import { OrdersGateway } from '../gateway/orders.gateway';
 import { ZaloPayService } from '../zalopay/zalopay.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { UpdateOrderPaymentStatusDto } from './dto/update-order-payment-status.dto';
 
 @Injectable()
 export class OrdersService {
@@ -188,7 +189,19 @@ export class OrdersService {
   }
 
   // ─── Cập nhật trạng thái đơn hàng (Admin) ───────────────────────────────────
-  updateOrderStatus(id: string, dto: UpdateOrderStatusDto) {
-    return this.ordersRepository.updateStatus(id, dto.status);
+  async updateOrderStatus(id: string, dto: UpdateOrderStatusDto) {
+    const order = await this.ordersRepository.updateStatus(id, dto.status);
+    this.ordersGateway.emitOrderUpdated(order);
+    return order;
+  }
+
+  // ─── Cập nhật trạng thái thanh toán (Admin) ───────────────────────────────────
+  async updateOrderPaymentStatus(id: string, dto: UpdateOrderPaymentStatusDto) {
+    const order = await this.ordersRepository.updatePaymentStatus(
+      id,
+      dto.payment_status,
+    );
+    this.ordersGateway.emitOrderUpdated(order);
+    return order;
   }
 }
