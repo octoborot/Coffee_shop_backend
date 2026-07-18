@@ -70,6 +70,14 @@ export class OrdersController {
     return this.ordersService.getAdminOrders(status);
   }
 
+  @Get('admin/orders/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Lấy chi tiết 1 đơn hàng (Admin)' })
+  getAdminOrderById(@Param('id') id: string) {
+    return this.ordersService.getOrderById(id);
+  }
+
   @Patch('admin/orders/:id/status')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
