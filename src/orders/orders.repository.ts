@@ -103,7 +103,13 @@ export class OrdersRepository {
   findByCustomerId(customerId: string) {
     return this.prisma.order.findMany({
       where: { customer_id: customerId },
-      include: { items: true },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
       orderBy: { created_at: 'desc' },
     });
   }
