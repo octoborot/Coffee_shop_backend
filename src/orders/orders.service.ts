@@ -13,6 +13,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { UpdateOrderPaymentStatusDto } from './dto/update-order-payment-status.dto';
 import { RejectOrderDto } from './dto/reject-order.dto';
+import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 
 @Injectable()
 export class OrdersService {
@@ -192,6 +193,48 @@ export class OrdersService {
     return this.ordersRepository.findAll(status ? { status } : undefined);
   }
 
+  async updateCustomerPaymentMethod(
+    id: string,
+    customerId: string,
+    dto: UpdatePaymentMethodDto,
+  ) {
+    const currentOrder = await this.ordersRepository.findById(id);
+    if (!currentOrder) {
+      throw new NotFoundException(`Don hang ${id} khong ton tai.`);
+    }
+    if (currentOrder.customer_id !== customerId) {
+      throw new ForbiddenException('Ban khong co quyen cap nhat don hang nay.');
+    }
+    if (currentOrder.status === OrderStatus.New) {
+      throw new BadRequestException('Don hang chua duoc quan xac nhan.');
+    }
+    if (currentOrder.status === OrderStatus.Cancelled) {
+      throw new BadRequestException('Don hang da bi tu choi.');
+    }
+    if (currentOrder.payment_status === 'PAID') {
+      throw new BadRequestException('Don hang da thanh toan.');
+    }
+
+    const marker = '[PAYMENT_SELECTED]';
+    const note = (currentOrder.note ?? '').includes(marker)
+      ? currentOrder.note ?? undefined
+      : [currentOrder.note, marker].filter(Boolean).join('\n');
+
+    const order = await this.ordersRepository.updatePaymentMethod(
+      id,
+      dto.payment_method,
+      note,
+    );
+    this.ordersGateway.emitOrderUpdated(order);
+
+    let zaloPayResult: any = null;
+    if (dto.payment_method === 'ZALOPAY') {
+      zaloPayResult = await this.createZaloPayPayment(order);
+    }
+
+    return { order, zalopay: zaloPayResult };
+  }
+
   // ─── Cập nhật trạng thái đơn hàng (Admin) ───────────────────────────────────
   async updateOrderStatus(id: string, dto: UpdateOrderStatusDto) {
     const order = await this.ordersRepository.updateStatus(id, dto.status);
@@ -320,5 +363,33 @@ export class OrdersService {
     const normalized = description.toUpperCase();
     const match = normalized.match(/#?BB[-\s]?(\d{4,})/);
     return match ? `#BB-${match[1]}` : null;
+  }
+
+  private createZaloPayPayment(order: {
+    id: string;
+    total_price_vnd: number;
+    items?: {
+      name: string;
+      quantity: number;
+      price: unknown;
+      price_vnd: number;
+      options?: unknown;
+    }[];
+  }) {
+    const now = new Date();
+    const yy = now.getFullYear().toString().slice(2);
+    const mm = (now.getMonth() + 1).toString().padStart(2, '0');
+    const dd = now.getDate().toString().padStart(2, '0');
+    const transId = `${yy}${mm}${dd}_${order.id.replace('#BB-', '')}`;
+
+    return this.zaloPayService.createZaloPayOrder(
+      transId,
+      order.total_price_vnd,
+      `Thanh toan don hang ${order.id}`,
+      (order.items ?? []).map((item) => ({
+        ...item,
+        price: Number(item.price),
+      })),
+    );
   }
 }

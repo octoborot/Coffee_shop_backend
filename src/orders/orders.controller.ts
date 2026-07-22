@@ -22,6 +22,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { UpdateOrderPaymentStatusDto } from './dto/update-order-payment-status.dto';
 import { RejectOrderDto } from './dto/reject-order.dto';
+import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Orders')
@@ -87,6 +88,18 @@ export class OrdersController {
   @ApiOperation({ summary: 'Lấy chi tiết 1 đơn hàng' })
   getOrderById(@Param('id') id: string) {
     return this.ordersService.getOrderById(id);
+  }
+
+  @Patch('customer/orders/:id/payment-method')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Khach chon phuong thuc thanh toan sau khi quan nhan don' })
+  updateCustomerPaymentMethod(
+    @Param('id') id: string,
+    @Body() dto: UpdatePaymentMethodDto,
+    @Request() req,
+  ) {
+    return this.ordersService.updateCustomerPaymentMethod(id, req.user.id, dto);
   }
 
   // ─── Admin Routes ────────────────────────────────────────────────────────────

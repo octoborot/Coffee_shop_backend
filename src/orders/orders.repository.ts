@@ -151,6 +151,14 @@ export class OrdersRepository {
     });
   }
 
+  updatePaymentMethod(id: string, paymentMethod: PaymentMethod, note?: string) {
+    return this.prisma.order.update({
+      where: { id },
+      data: { payment_method: paymentMethod, note },
+      include: { items: true, customer: true },
+    });
+  }
+
   // ─── Cập nhật trạng thái thanh toán ──────────────────────────────────────────
   updatePaymentStatus(id: string, paymentStatus: PaymentStatus) {
     return this.prisma.order.update({
