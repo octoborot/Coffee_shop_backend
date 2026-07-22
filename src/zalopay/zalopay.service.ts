@@ -70,4 +70,20 @@ export class ZaloPayService {
       throw new BadRequestException('Không thể gọi API ZaloPay Sandbox.');
     }
   }
+
+  verifyCallback(data: string, mac: string) {
+    const key2 =
+      this.configService.get<string>('ZALOPAY_KEY2') ||
+      'kLtgPl8YESD1XcgX5IZOaKpb2R08oeRX';
+    const computedMac = crypto
+      .createHmac('sha256', key2)
+      .update(data)
+      .digest('hex');
+
+    if (computedMac !== mac) {
+      throw new BadRequestException('ZaloPay callback MAC không hợp lệ.');
+    }
+
+    return JSON.parse(data);
+  }
 }

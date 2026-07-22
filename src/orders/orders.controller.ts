@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Body,
+  Headers,
   Param,
   Patch,
   UseGuards,
@@ -20,6 +21,7 @@ import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { UpdateOrderPaymentStatusDto } from './dto/update-order-payment-status.dto';
+import { RejectOrderDto } from './dto/reject-order.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Orders')
@@ -41,6 +43,34 @@ export class OrdersController {
   @ApiOperation({ summary: 'Tạo đơn hàng không cần đăng nhập (Guest)' })
   createGuestOrder(@Body() dto: CreateOrderDto) {
     return this.ordersService.createOrder(dto);
+  }
+
+  @Post('zalopay/callback')
+  @ApiOperation({ summary: 'Nhận callback thanh toán thành công từ ZaloPay' })
+  async handleZaloPayCallback(@Body() body: { data: string; mac: string }) {
+    try {
+      await this.ordersService.handleZaloPayCallback(body.data, body.mac);
+      return { return_code: 1, return_message: 'success' };
+    } catch (error) {
+      return {
+        return_code: 0,
+        return_message:
+          error instanceof Error ? error.message : 'callback failed',
+      };
+    }
+  }
+
+  @Post('bank-transfer/webhook')
+  @ApiOperation({
+    summary:
+      'Webhook xác nhận chuyển khoản/QR từ nhà cung cấp như Casso, PayOS hoặc banking webhook',
+  })
+  async handleBankTransferWebhook(
+    @Body() body: Record<string, unknown>,
+    @Headers('x-webhook-secret') webhookSecret?: string,
+  ) {
+    await this.ordersService.handleBankTransferWebhook(body, webhookSecret);
+    return { ok: true };
   }
 
   @Get('customer/orders')
@@ -87,6 +117,14 @@ export class OrdersController {
     @Body() dto: UpdateOrderStatusDto,
   ) {
     return this.ordersService.updateOrderStatus(id, dto);
+  }
+
+  @Patch('admin/orders/:id/reject')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Tu choi don hang va gui ly do cho khach' })
+  rejectOrder(@Param('id') id: string, @Body() dto: RejectOrderDto) {
+    return this.ordersService.rejectOrder(id, dto);
   }
 
   @Patch('admin/orders/:id/payment-status')

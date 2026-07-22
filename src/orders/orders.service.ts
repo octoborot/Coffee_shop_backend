@@ -1,8 +1,10 @@
 import {
   Injectable,
   BadRequestException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { OrderStatus } from '@prisma/client';
 import { OrdersRepository } from './orders.repository';
 import { OrdersGateway } from '../gateway/orders.gateway';
@@ -10,6 +12,7 @@ import { ZaloPayService } from '../zalopay/zalopay.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { UpdateOrderPaymentStatusDto } from './dto/update-order-payment-status.dto';
+import { RejectOrderDto } from './dto/reject-order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -17,6 +20,7 @@ export class OrdersService {
     private readonly ordersRepository: OrdersRepository,
     private readonly ordersGateway: OrdersGateway,
     private readonly zaloPayService: ZaloPayService,
+    private readonly configService: ConfigService,
   ) {}
 
   // ─── Tạo mã đơn hàng ngẫu nhiên: #BB-XXXX ──────────────────────────────────
@@ -195,6 +199,27 @@ export class OrdersService {
     return order;
   }
 
+  async rejectOrder(id: string, dto: RejectOrderDto) {
+    const currentOrder = await this.ordersRepository.findById(id);
+    if (!currentOrder) {
+      throw new NotFoundException(`Don hang ${id} khong ton tai.`);
+    }
+
+    const marker = '[ADMIN_REJECT_REASON]';
+    const cleanNote = (currentOrder.note ?? '').split(marker)[0].trim();
+    const note = [cleanNote, `${marker}${dto.reason.trim()}`]
+      .filter(Boolean)
+      .join('\n');
+
+    const order = await this.ordersRepository.updateStatusAndNote(
+      id,
+      OrderStatus.Cancelled,
+      note,
+    );
+    this.ordersGateway.emitOrderUpdated(order);
+    return order;
+  }
+
   // ─── Cập nhật trạng thái thanh toán (Admin) ───────────────────────────────────
   async updateOrderPaymentStatus(id: string, dto: UpdateOrderPaymentStatusDto) {
     const order = await this.ordersRepository.updatePaymentStatus(
@@ -203,5 +228,97 @@ export class OrdersService {
     );
     this.ordersGateway.emitOrderUpdated(order);
     return order;
+  }
+
+  async handleZaloPayCallback(data: string, mac: string) {
+    const callbackData = this.zaloPayService.verifyCallback(data, mac);
+    const appTransId = callbackData.app_trans_id as string | undefined;
+    const orderNumber = appTransId?.split('_').pop();
+
+    if (!orderNumber) {
+      throw new BadRequestException('Callback ZaloPay thiếu app_trans_id.');
+    }
+
+    const orderId = `#BB-${orderNumber}`;
+    const order = await this.ordersRepository.updatePaymentStatus(
+      orderId,
+      'PAID',
+    );
+    this.ordersGateway.emitOrderUpdated(order);
+    return order;
+  }
+
+  async handleBankTransferWebhook(
+    payload: Record<string, unknown>,
+    webhookSecret?: string,
+  ) {
+    const configuredSecret = this.configService.get<string>(
+      'BANK_WEBHOOK_SECRET',
+    );
+    if (configuredSecret && webhookSecret !== configuredSecret) {
+      throw new ForbiddenException('Webhook secret không hợp lệ.');
+    }
+
+    const transaction = this.extractBankTransaction(payload);
+    const orderId = this.extractOrderId(transaction.description);
+    if (!orderId) {
+      throw new BadRequestException(
+        'Không tìm thấy mã đơn hàng trong nội dung chuyển khoản.',
+      );
+    }
+
+    const order = await this.ordersRepository.findById(orderId);
+    if (!order) {
+      throw new NotFoundException(`Đơn hàng ${orderId} không tồn tại.`);
+    }
+    if (order.payment_method !== 'BANK_TRANSFER') {
+      throw new BadRequestException(
+        `Đơn hàng ${orderId} không dùng phương thức chuyển khoản.`,
+      );
+    }
+    if (transaction.amount < order.total_price_vnd) {
+      throw new BadRequestException(
+        `Số tiền chuyển khoản chưa đủ cho đơn hàng ${orderId}.`,
+      );
+    }
+
+    const paidOrder = await this.ordersRepository.updatePaymentStatus(
+      orderId,
+      'PAID',
+    );
+    this.ordersGateway.emitOrderUpdated(paidOrder);
+    return paidOrder;
+  }
+
+  private extractBankTransaction(payload: Record<string, unknown>) {
+    const data = (payload.data ?? payload) as Record<string, unknown>;
+    const description = String(
+      data.description ??
+        data.content ??
+        data.transferContent ??
+        data.orderCode ??
+        '',
+    );
+    const amount = Number(
+      data.amount ??
+        data.transferAmount ??
+        data.creditAmount ??
+        data.transactionAmount ??
+        0,
+    );
+
+    if (!description || !Number.isFinite(amount) || amount <= 0) {
+      throw new BadRequestException(
+        'Webhook chuyển khoản thiếu nội dung hoặc số tiền giao dịch.',
+      );
+    }
+
+    return { description, amount };
+  }
+
+  private extractOrderId(description: string) {
+    const normalized = description.toUpperCase();
+    const match = normalized.match(/#?BB[-\s]?(\d{4,})/);
+    return match ? `#BB-${match[1]}` : null;
   }
 }

@@ -144,6 +144,13 @@ export class OrdersRepository {
     });
   }
 
+  updateStatusAndNote(id: string, status: OrderStatus, note?: string) {
+    return this.prisma.order.update({
+      where: { id },
+      data: { status, note },
+    });
+  }
+
   // ─── Cập nhật trạng thái thanh toán ──────────────────────────────────────────
   updatePaymentStatus(id: string, paymentStatus: PaymentStatus) {
     return this.prisma.order.update({
