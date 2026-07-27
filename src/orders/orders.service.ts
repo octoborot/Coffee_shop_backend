@@ -156,25 +156,7 @@ export class OrdersService {
     // Emit sự kiện real-time đến Admin Dashboard
     this.ordersGateway.emitNewOrder(order);
 
-    // Xử lý tạo link ZaloPay nếu chọn thanh toán qua ZaloPay
-    let zaloPayResult: any = null;
-    if (dto.payment_method === 'ZALOPAY') {
-      // trans_id format: yyMMdd_xxxxx
-      const now = new Date();
-      const yy = now.getFullYear().toString().slice(2);
-      const mm = (now.getMonth() + 1).toString().padStart(2, '0');
-      const dd = now.getDate().toString().padStart(2, '0');
-      const transId = `${yy}${mm}${dd}_${orderId.replace('#BB-', '')}`;
-
-      zaloPayResult = await this.zaloPayService.createZaloPayOrder(
-        transId,
-        totalVnd,
-        `Thanh toan don hang ${orderId}`,
-        itemsData,
-      );
-    }
-
-    return { order, zalopay: zaloPayResult };
+    return { order, zalopay: null };
   }
 
   // ─── Lấy lịch sử đơn hàng của Customer ──────────────────────────────────────
@@ -206,9 +188,6 @@ export class OrdersService {
     if (currentOrder.customer_id !== customerId) {
       throw new ForbiddenException('Ban khong co quyen cap nhat don hang nay.');
     }
-    if (currentOrder.status === OrderStatus.New) {
-      throw new BadRequestException('Don hang chua duoc quan xac nhan.');
-    }
     if (currentOrder.status === OrderStatus.Cancelled) {
       throw new BadRequestException('Don hang da bi tu choi.');
     }
@@ -228,12 +207,7 @@ export class OrdersService {
     );
     this.ordersGateway.emitOrderUpdated(order);
 
-    let zaloPayResult: any = null;
-    if (dto.payment_method === 'ZALOPAY') {
-      zaloPayResult = await this.createZaloPayPayment(order);
-    }
-
-    return { order, zalopay: zaloPayResult };
+    return { order, zalopay: null };
   }
 
   // ─── Cập nhật trạng thái đơn hàng (Admin) ───────────────────────────────────
@@ -310,14 +284,12 @@ export class OrdersService {
         : await this.ordersRepository.updatePaymentMethod(id, 'ZALOPAY', order.note ?? undefined);
 
     const amount = updatedOrder.total_price_vnd;
-    const item = JSON.stringify(
-      (updatedOrder.items ?? []).map((item) => ({
+    const item = (updatedOrder.items ?? []).map((item) => ({
         id: item.product_id ?? item.id,
         name: item.name,
         quantity: item.quantity,
         amount: item.price_vnd * item.quantity,
-      })),
-    );
+      }));
     const extradata = JSON.stringify({
       merchantOrderId: updatedOrder.id,
     });
@@ -332,10 +304,14 @@ export class OrdersService {
       extradata,
       method,
     };
+    const macPayload = {
+      ...payload,
+      item: JSON.stringify(item),
+    };
 
     return {
       ...payload,
-      mac: this.createCheckoutSdkMac(payload),
+      mac: this.createCheckoutSdkMac(macPayload),
     };
   }
 
@@ -568,3 +544,4 @@ export class OrdersService {
     );
   }
 }
+
