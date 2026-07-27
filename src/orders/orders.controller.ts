@@ -61,6 +61,36 @@ export class OrdersController {
     }
   }
 
+  @Post('customer/orders/:id/checkout-sdk')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create Zalo Checkout SDK payload for Mini App' })
+  createCheckoutSdkPayload(@Param('id') id: string, @Request() req) {
+    return this.ordersService.createCheckoutSdkPayload(id, req.user.id);
+  }
+
+  @Post('checkout-sdk/callback')
+  @ApiOperation({ summary: 'Receive payment callback from Zalo Checkout SDK' })
+  async handleCheckoutSdkCallback(
+    @Body()
+    body: {
+      data: Record<string, unknown>;
+      mac?: string;
+      overallMac?: string;
+    },
+  ) {
+    try {
+      await this.ordersService.handleCheckoutSdkCallback(body);
+      return { returnCode: 1, returnMessage: 'success' };
+    } catch (error) {
+      return {
+        returnCode: 0,
+        returnMessage:
+          error instanceof Error ? error.message : 'callback failed',
+      };
+    }
+  }
+
   @Post('bank-transfer/webhook')
   @ApiOperation({
     summary:

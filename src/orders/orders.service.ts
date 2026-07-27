@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OrderStatus } from '@prisma/client';
+import * as crypto from 'crypto';
 import { OrdersRepository } from './orders.repository';
 import { OrdersGateway } from '../gateway/orders.gateway';
 import { ZaloPayService } from '../zalopay/zalopay.service';
@@ -291,6 +292,115 @@ export class OrdersService {
     return order;
   }
 
+  async createCheckoutSdkPayload(id: string, customerId: string) {
+    const order = await this.ordersRepository.findById(id);
+    if (!order) {
+      throw new NotFoundException(`Don hang ${id} khong ton tai.`);
+    }
+    if (order.customer_id !== customerId) {
+      throw new ForbiddenException('Ban khong co quyen thanh toan don hang nay.');
+    }
+    if (order.payment_status === 'PAID') {
+      throw new BadRequestException('Don hang da thanh toan.');
+    }
+
+    const updatedOrder =
+      order.payment_method === 'ZALOPAY'
+        ? order
+        : await this.ordersRepository.updatePaymentMethod(id, 'ZALOPAY', order.note ?? undefined);
+
+    const amount = updatedOrder.total_price_vnd;
+    const item = JSON.stringify(
+      (updatedOrder.items ?? []).map((item) => ({
+        id: item.product_id ?? item.id,
+        name: item.name,
+        quantity: item.quantity,
+        amount: item.price_vnd * item.quantity,
+      })),
+    );
+    const extradata = JSON.stringify({
+      merchantOrderId: updatedOrder.id,
+    });
+    const method = JSON.stringify({
+      id: this.configService.get<string>('ZALO_CHECKOUT_METHOD') ?? 'ZALOPAY_SANDBOX',
+      isCustom: false,
+    });
+    const payload = {
+      amount,
+      desc: `Thanh toan don hang ${updatedOrder.id}`,
+      item,
+      extradata,
+      method,
+    };
+
+    return {
+      ...payload,
+      mac: this.createCheckoutSdkMac(payload),
+    };
+  }
+
+  async handleCheckoutSdkCallback(body: {
+    data: Record<string, unknown>;
+    mac?: string;
+    overallMac?: string;
+  }) {
+    const data = body.data;
+    if (!data || typeof data !== 'object') {
+      throw new BadRequestException('Checkout SDK callback thieu data.');
+    }
+
+    if (body.mac) {
+      this.verifyCheckoutSdkMac(data, body.mac);
+    }
+    if (body.overallMac) {
+      this.verifyCheckoutSdkOverallMac(data, body.overallMac);
+    }
+    if (!body.mac && !body.overallMac) {
+      throw new BadRequestException('Checkout SDK callback thieu mac.');
+    }
+
+    const orderId = this.extractCheckoutSdkOrderId(data);
+    const amount = Number(data.amount);
+    const resultCode = Number(data.resultCode);
+    const order = await this.ordersRepository.findById(orderId);
+
+    if (!order) {
+      throw new NotFoundException(`Don hang ${orderId} khong ton tai.`);
+    }
+    if (amount !== order.total_price_vnd) {
+      throw new BadRequestException('So tien callback khong khop don hang.');
+    }
+
+    if (resultCode === 1) {
+      const paidOrder = await this.ordersRepository.updatePaymentStatus(
+        orderId,
+        'PAID',
+      );
+      this.ordersGateway.emitOrderUpdated(paidOrder);
+      return paidOrder;
+    }
+
+    return order;
+  }
+
+  private extractCheckoutSdkOrderId(data: Record<string, unknown>) {
+    const extradata = data.extradata;
+    if (typeof extradata === 'string' && extradata) {
+      try {
+        const parsed = JSON.parse(decodeURIComponent(extradata)) as {
+          merchantOrderId?: unknown;
+        };
+        if (typeof parsed.merchantOrderId === 'string') {
+          return parsed.merchantOrderId;
+        }
+      } catch {
+        throw new BadRequestException('Checkout SDK extradata khong hop le.');
+      }
+    }
+
+    return String(data.orderId ?? '');
+  }
+
   async handleBankTransferWebhook(
     payload: Record<string, unknown>,
     webhookSecret?: string,
@@ -363,6 +473,66 @@ export class OrdersService {
     const normalized = description.toUpperCase();
     const match = normalized.match(/#?BB[-\s]?(\d{4,})/);
     return match ? `#BB-${match[1]}` : null;
+  }
+
+  private createCheckoutSdkMac(params: Record<string, string | number>) {
+    const privateKey = this.configService.get<string>(
+      'ZALO_CHECKOUT_PRIVATE_KEY',
+    );
+    if (!privateKey) {
+      throw new BadRequestException('Chua cau hinh ZALO_CHECKOUT_PRIVATE_KEY.');
+    }
+
+    const dataMac = Object.keys(params)
+      .sort()
+      .map((key) => `${key}=${params[key]}`)
+      .join('&');
+
+    return crypto.createHmac('sha256', privateKey).update(dataMac).digest('hex');
+  }
+
+  private verifyCheckoutSdkMac(data: Record<string, unknown>, mac: string) {
+    const dataForMac =
+      `appId=${data.appId}` +
+      `&amount=${data.amount}` +
+      `&description=${data.description}` +
+      `&orderId=${data.orderId}` +
+      `&message=${data.message}` +
+      `&resultCode=${data.resultCode}` +
+      `&transId=${data.transId}`;
+    const reqMac = this.signCheckoutSdkData(dataForMac);
+
+    if (reqMac !== mac) {
+      throw new BadRequestException('Checkout SDK callback mac khong hop le.');
+    }
+  }
+
+  private verifyCheckoutSdkOverallMac(
+    data: Record<string, unknown>,
+    overallMac: string,
+  ) {
+    const dataOverallMac = Object.keys(data)
+      .sort()
+      .map((key) => `${key}=${data[key]}`)
+      .join('&');
+    const reqOverallMac = this.signCheckoutSdkData(dataOverallMac);
+
+    if (reqOverallMac !== overallMac) {
+      throw new BadRequestException(
+        'Checkout SDK callback overallMac khong hop le.',
+      );
+    }
+  }
+
+  private signCheckoutSdkData(data: string) {
+    const privateKey = this.configService.get<string>(
+      'ZALO_CHECKOUT_PRIVATE_KEY',
+    );
+    if (!privateKey) {
+      throw new BadRequestException('Chua cau hinh ZALO_CHECKOUT_PRIVATE_KEY.');
+    }
+
+    return crypto.createHmac('sha256', privateKey).update(data).digest('hex');
   }
 
   private createZaloPayPayment(order: {
