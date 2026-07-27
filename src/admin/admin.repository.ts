@@ -47,14 +47,32 @@ export class AdminRepository {
   // ─── Top sản phẩm bán chạy ────────────────────────────────────────────────
   async getTopProducts(limit = 5) {
     const results = await this.prisma.orderItem.groupBy({
-      by: ['name'],
+      by: ['product_id', 'name'],
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: 'desc' } },
       take: limit,
     });
+
+    const productIds = results
+      .map((item) => item.product_id)
+      .filter((id): id is string => Boolean(id));
+    const products = productIds.length
+      ? await this.prisma.product.findMany({
+          where: { id: { in: productIds } },
+          select: { id: true, name: true, image: true },
+        })
+      : [];
+    const productMap = new Map(products.map((product) => [product.id, product]));
+
     return results.map((r) => ({
-      name: r.name,
-      total_sold: r._sum.quantity ?? 0,
+      product_id: r.product_id ?? r.name,
+      product_name: r.product_id
+        ? (productMap.get(r.product_id)?.name ?? r.name)
+        : r.name,
+      product_image: r.product_id
+        ? (productMap.get(r.product_id)?.image ?? null)
+        : null,
+      total_quantity: r._sum.quantity ?? 0,
     }));
   }
 
