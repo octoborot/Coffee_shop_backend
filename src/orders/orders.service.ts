@@ -476,12 +476,7 @@ export class OrdersService {
   }
 
   private createCheckoutSdkMac(params: Record<string, string | number>) {
-    const privateKey = this.configService.get<string>(
-      'ZALO_CHECKOUT_PRIVATE_KEY',
-    );
-    if (!privateKey) {
-      throw new BadRequestException('Chua cau hinh ZALO_CHECKOUT_PRIVATE_KEY.');
-    }
+    const privateKey = this.getCheckoutSdkPrivateKey();
 
     const dataMac = Object.keys(params)
       .sort()
@@ -525,14 +520,24 @@ export class OrdersService {
   }
 
   private signCheckoutSdkData(data: string) {
-    const privateKey = this.configService.get<string>(
-      'ZALO_CHECKOUT_PRIVATE_KEY',
-    );
-    if (!privateKey) {
-      throw new BadRequestException('Chua cau hinh ZALO_CHECKOUT_PRIVATE_KEY.');
-    }
+    const privateKey = this.getCheckoutSdkPrivateKey();
 
     return crypto.createHmac('sha256', privateKey).update(data).digest('hex');
+  }
+
+  private getCheckoutSdkPrivateKey() {
+    const privateKey =
+      this.configService.get<string>('ZALO_CHECKOUT_PRIVATE_KEY') ||
+      this.configService.get<string>('ZALO_PRIVATE_KEY') ||
+      this.configService.get<string>('ZALO_PRIAVTE_KEY');
+
+    if (!privateKey) {
+      throw new BadRequestException(
+        'Chua cau hinh ZALO_CHECKOUT_PRIVATE_KEY tren backend.',
+      );
+    }
+
+    return privateKey;
   }
 
   private createZaloPayPayment(order: {
