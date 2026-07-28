@@ -3,6 +3,8 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  OnModuleDestroy,
+  OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OrderStatus } from '@prisma/client';
@@ -19,13 +21,32 @@ import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 type VnpayReturnQuery = Record<string, string | string[] | undefined>;
 
 @Injectable()
-export class OrdersService {
+export class OrdersService implements OnModuleInit, OnModuleDestroy {
+  private readonly unpaidOrderTimeoutMs = 5 * 60 * 1000;
+  private readonly unpaidOrderSweepMs = 30 * 1000;
+  private unpaidOrderSweepTimer?: NodeJS.Timeout;
+  private isSweepingUnpaidOrders = false;
+
   constructor(
     private readonly ordersRepository: OrdersRepository,
     private readonly ordersGateway: OrdersGateway,
     private readonly zaloPayService: ZaloPayService,
     private readonly configService: ConfigService,
   ) {}
+
+  onModuleInit() {
+    void this.cancelExpiredUnpaidOrders();
+    this.unpaidOrderSweepTimer = setInterval(
+      () => void this.cancelExpiredUnpaidOrders(),
+      this.unpaidOrderSweepMs,
+    );
+  }
+
+  onModuleDestroy() {
+    if (this.unpaidOrderSweepTimer) {
+      clearInterval(this.unpaidOrderSweepTimer);
+    }
+  }
 
   // ─── Tạo mã đơn hàng ngẫu nhiên: #BB-XXXX ──────────────────────────────────
   private generateOrderId(): string {
@@ -213,6 +234,43 @@ export class OrdersService {
   }
 
   // ─── Cập nhật trạng thái đơn hàng (Admin) ───────────────────────────────────
+  private async cancelExpiredUnpaidOrders() {
+    if (this.isSweepingUnpaidOrders) return;
+    this.isSweepingUnpaidOrders = true;
+
+    try {
+      const cutoff = new Date(Date.now() - this.unpaidOrderTimeoutMs);
+      const expiredOrders =
+        await this.ordersRepository.findUnpaidAcceptedOrdersOlderThan(cutoff);
+
+      for (const currentOrder of expiredOrders) {
+        const marker = '[AUTO_CANCEL_UNPAID]';
+        const cleanNote = (currentOrder.note ?? '').split(marker)[0].trim();
+        const note = [
+          cleanNote,
+          `${marker}Khach chua thanh toan sau 5 phut.`,
+        ]
+          .filter(Boolean)
+          .join('\n');
+
+        const cancelledOrder =
+          await this.ordersRepository.cancelUnpaidAcceptedOrder(
+            currentOrder.id,
+            cutoff,
+            note,
+          );
+
+        if (cancelledOrder) {
+          this.ordersGateway.emitOrderUpdated(cancelledOrder);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to cancel expired unpaid orders:', err);
+    } finally {
+      this.isSweepingUnpaidOrders = false;
+    }
+  }
+
   async updateOrderStatus(id: string, dto: UpdateOrderStatusDto) {
     const currentOrder = await this.ordersRepository.findById(id);
     if (!currentOrder) {
