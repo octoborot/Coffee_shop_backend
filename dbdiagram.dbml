@@ -169,6 +169,7 @@ Table orders {
   total_price_vnd int [not null]
   note text
   address text [note: 'Snapshot dia chi giao hang hoac dia chi cua hang tai luc dat']
+  accepted_at timestamp [note: 'Thoi diem admin nhan don, dung de huy neu qua han thanh toan']
   created_at timestamp [not null, default: `now()`]
   updated_at timestamp [not null]
 }

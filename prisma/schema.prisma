@@ -195,6 +195,7 @@ model Order {
   total_price_vnd     Int
   note                String?       @db.Text
   address             String?       @db.Text
+  accepted_at         DateTime?     @db.Timestamp()
   created_at          DateTime      @default(now()) @db.Timestamp()
   updated_at          DateTime      @updatedAt @db.Timestamp()
 

@@ -142,7 +142,10 @@ export class OrdersRepository {
   updateStatus(id: string, status: OrderStatus) {
     return this.prisma.order.update({
       where: { id },
-      data: { status },
+      data: {
+        status,
+        accepted_at: status === OrderStatus.Accepted ? new Date() : undefined,
+      },
       include: this.orderInclude,
     });
   }
@@ -169,6 +172,43 @@ export class OrdersRepository {
       where: { id },
       data: { payment_status: paymentStatus },
       include: this.orderInclude,
+    });
+  }
+
+  findUnpaidAcceptedOrdersOlderThan(cutoff: Date) {
+    return this.prisma.order.findMany({
+      where: {
+        status: OrderStatus.Accepted,
+        payment_status: PaymentStatus.UNPAID,
+        accepted_at: { lte: cutoff },
+      },
+      include: this.orderInclude,
+    });
+  }
+
+  async cancelUnpaidAcceptedOrder(id: string, cutoff: Date, note?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const result = await tx.order.updateMany({
+        where: {
+          id,
+          status: OrderStatus.Accepted,
+          payment_status: PaymentStatus.UNPAID,
+          accepted_at: { lte: cutoff },
+        },
+        data: {
+          status: OrderStatus.Cancelled,
+          note,
+        },
+      });
+
+      if (result.count === 0) {
+        return null;
+      }
+
+      return tx.order.findUnique({
+        where: { id },
+        include: this.orderInclude,
+      });
     });
   }
 }
