@@ -11,6 +11,13 @@ import {
 export class OrdersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  private readonly orderInclude = {
+    items: true,
+    customer: {
+      select: { id: true, name: true, phone: true, avatar_text: true },
+    },
+  } as const;
+
   // ─── Lấy giá sản phẩm từ DB để tính lại total ──────────────────────────────
   getProductsByIds(productIds: string[]) {
     return this.prisma.product.findMany({
@@ -93,7 +100,7 @@ export class OrdersRepository {
             })),
           },
         },
-        include: { items: true, customer: true },
+        include: this.orderInclude,
       });
       return order;
     });
@@ -118,7 +125,7 @@ export class OrdersRepository {
   findById(id: string) {
     return this.prisma.order.findUnique({
       where: { id },
-      include: { items: true, customer: true },
+      include: this.orderInclude,
     });
   }
 
@@ -126,12 +133,7 @@ export class OrdersRepository {
   findAll(filters?: { status?: OrderStatus }) {
     return this.prisma.order.findMany({
       where: filters?.status ? { status: filters.status } : undefined,
-      include: {
-        items: true,
-        customer: {
-          select: { id: true, name: true, phone: true },
-        },
-      },
+      include: this.orderInclude,
       orderBy: { created_at: 'desc' },
     });
   }
@@ -141,6 +143,7 @@ export class OrdersRepository {
     return this.prisma.order.update({
       where: { id },
       data: { status },
+      include: this.orderInclude,
     });
   }
 
@@ -148,6 +151,7 @@ export class OrdersRepository {
     return this.prisma.order.update({
       where: { id },
       data: { status, note },
+      include: this.orderInclude,
     });
   }
 
@@ -155,7 +159,7 @@ export class OrdersRepository {
     return this.prisma.order.update({
       where: { id },
       data: { payment_method: paymentMethod, note },
-      include: { items: true, customer: true },
+      include: this.orderInclude,
     });
   }
 
@@ -164,6 +168,7 @@ export class OrdersRepository {
     return this.prisma.order.update({
       where: { id },
       data: { payment_status: paymentStatus },
+      include: this.orderInclude,
     });
   }
 }

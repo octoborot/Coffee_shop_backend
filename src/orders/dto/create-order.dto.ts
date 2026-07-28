@@ -78,9 +78,10 @@ export class CreateOrderDto {
   @IsString()
   note?: string;
 
-  @ApiProperty({ enum: PaymentMethod, default: PaymentMethod.CASH })
+  @ApiPropertyOptional({ enum: PaymentMethod, default: PaymentMethod.CASH })
+  @IsOptional()
   @IsEnum(PaymentMethod)
-  payment_method: PaymentMethod;
+  payment_method?: PaymentMethod;
 
   @ApiPropertyOptional({
     description: 'Tên khách hàng (dành cho đặt hàng không đăng nhập)',
