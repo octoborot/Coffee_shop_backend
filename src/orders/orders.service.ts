@@ -16,6 +16,8 @@ import { UpdateOrderPaymentStatusDto } from './dto/update-order-payment-status.d
 import { RejectOrderDto } from './dto/reject-order.dto';
 import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 
+type VnpayReturnQuery = Record<string, string | string[] | undefined>;
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -138,7 +140,7 @@ export class OrdersService {
       customer_name: customerName,
       customer_phone: customerPhone,
       type: dto.type,
-      payment_method: dto.payment_method,
+      payment_method: dto.payment_method ?? 'CASH',
       subtotal_vnd: subtotalVnd,
       discount_vnd: discountVnd,
       shipping_fee_vnd: shippingFeeVnd,
@@ -212,6 +214,40 @@ export class OrdersService {
 
   // ─── Cập nhật trạng thái đơn hàng (Admin) ───────────────────────────────────
   async updateOrderStatus(id: string, dto: UpdateOrderStatusDto) {
+    const currentOrder = await this.ordersRepository.findById(id);
+    if (!currentOrder) {
+      throw new NotFoundException(`Don hang ${id} khong ton tai.`);
+    }
+
+    if (dto.status === OrderStatus.Preparing) {
+      if (currentOrder.status !== OrderStatus.Accepted) {
+        throw new BadRequestException(
+          'Chi co the bat dau pha che sau khi da nhan don.',
+        );
+      }
+      if (currentOrder.payment_status !== 'PAID') {
+        throw new BadRequestException(
+          'Chi co the bat dau pha che sau khi khach thanh toan thanh cong.',
+        );
+      }
+    }
+
+    if (
+      dto.status === OrderStatus.Delivering &&
+      currentOrder.status !== OrderStatus.Preparing
+    ) {
+      throw new BadRequestException('Chi co the giao hang sau khi da pha che.');
+    }
+
+    if (
+      dto.status === OrderStatus.Delivered &&
+      currentOrder.status !== OrderStatus.Delivering
+    ) {
+      throw new BadRequestException(
+        'Chi co the hoan tat don sau khi dang giao hang.',
+      );
+    }
+
     const order = await this.ordersRepository.updateStatus(id, dto.status);
     this.ordersGateway.emitOrderUpdated(order);
     return order;
@@ -278,10 +314,11 @@ export class OrdersService {
       throw new BadRequestException('Don hang da thanh toan.');
     }
 
+    const note = this.withPaymentSelectedMarker(order.note);
     const updatedOrder =
-      order.payment_method === 'ZALOPAY'
+      order.payment_method === 'ZALOPAY' && order.note === note
         ? order
-        : await this.ordersRepository.updatePaymentMethod(id, 'ZALOPAY', order.note ?? undefined);
+        : await this.ordersRepository.updatePaymentMethod(id, 'ZALOPAY', note);
 
     const amount = updatedOrder.total_price_vnd;
     const item = (updatedOrder.items ?? []).map((item) => ({
@@ -313,6 +350,71 @@ export class OrdersService {
       ...payload,
       mac: this.createCheckoutSdkMac(macPayload),
     };
+  }
+
+  async createVnpayPaymentUrl(
+    id: string,
+    customerId: string,
+    ipAddress?: string,
+  ) {
+    const order = await this.ordersRepository.findById(id);
+    if (!order) {
+      throw new NotFoundException(`Don hang ${id} khong ton tai.`);
+    }
+    if (order.customer_id !== customerId) {
+      throw new ForbiddenException('Ban khong co quyen thanh toan don hang nay.');
+    }
+    if (order.payment_status === 'PAID') {
+      throw new BadRequestException('Don hang da thanh toan.');
+    }
+
+    const note = this.withPaymentSelectedMarker(order.note);
+    const updatedOrder =
+      order.payment_method === 'VNPAY' && order.note === note
+        ? order
+        : await this.ordersRepository.updatePaymentMethod(id, 'VNPAY', note);
+
+    return {
+      paymentUrl: await this.buildVnpayPaymentUrl(
+        updatedOrder.id,
+        updatedOrder.total_price_vnd,
+        ipAddress,
+      ),
+    };
+  }
+
+  async handleVnpayReturn(query: VnpayReturnQuery) {
+    const params = this.normalizeVnpayQuery(query);
+    const isValidSignature = this.verifyVnpaySecureHash(params);
+    if (!isValidSignature) {
+      throw new BadRequestException('Chu ky VNPAY khong hop le.');
+    }
+
+    const orderId = this.decodeVnpayTxnRef(params.vnp_TxnRef);
+    const order = await this.ordersRepository.findById(orderId);
+    if (!order) {
+      throw new NotFoundException(`Don hang ${orderId} khong ton tai.`);
+    }
+
+    const amountVnd = Number(params.vnp_Amount) / 100;
+    if (amountVnd !== order.total_price_vnd) {
+      throw new BadRequestException('So tien VNPAY khong khop don hang.');
+    }
+
+    const isSuccess =
+      params.vnp_ResponseCode === '00' &&
+      params.vnp_TransactionStatus === '00';
+
+    if (isSuccess && order.payment_status !== 'PAID') {
+      const paidOrder = await this.ordersRepository.updatePaymentStatus(
+        orderId,
+        'PAID',
+      );
+      this.ordersGateway.emitOrderUpdated(paidOrder);
+      return { order: paidOrder, success: true };
+    }
+
+    return { order, success: isSuccess };
   }
 
   async handleCheckoutSdkCallback(body: {
@@ -451,6 +553,13 @@ export class OrdersService {
     return match ? `#BB-${match[1]}` : null;
   }
 
+  private withPaymentSelectedMarker(note?: string | null) {
+    const marker = '[PAYMENT_SELECTED]';
+    return (note ?? '').includes(marker)
+      ? note ?? undefined
+      : [note, marker].filter(Boolean).join('\n');
+  }
+
   private createCheckoutSdkMac(params: Record<string, string | number>) {
     const privateKey = this.getCheckoutSdkPrivateKey();
 
@@ -514,6 +623,148 @@ export class OrdersService {
     }
 
     return privateKey;
+  }
+
+  private async buildVnpayPaymentUrl(
+    orderId: string,
+    amountVnd: number,
+    ipAddress = '127.0.0.1',
+  ) {
+    const tmnCode = this.configService.get<string>('VNPAY_TMN_CODE');
+    const hashSecret = this.configService.get<string>('VNPAY_HASH_SECRET');
+    const paymentUrl =
+      this.configService.get<string>('VNPAY_PAYMENT_URL') ||
+      'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
+    const returnUrl =
+      this.configService.get<string>('VNPAY_RETURN_URL') ||
+      `${await this.getBackendBaseUrl()}/api/v1/vnpay/return`;
+
+    if (!tmnCode || !hashSecret) {
+      throw new BadRequestException(
+        'Chua cau hinh VNPAY_TMN_CODE va VNPAY_HASH_SECRET tren backend.',
+      );
+    }
+
+    const createDate = this.formatVnpayDate(new Date());
+    const params: Record<string, string | number> = {
+      vnp_Version: '2.1.0',
+      vnp_Command: 'pay',
+      vnp_TmnCode: tmnCode,
+      vnp_Amount: amountVnd * 100,
+      vnp_CurrCode: 'VND',
+      vnp_TxnRef: this.encodeVnpayTxnRef(orderId),
+      vnp_OrderInfo: `Thanh toan don hang ${orderId}`,
+      vnp_OrderType: 'other',
+      vnp_Locale: 'vn',
+      vnp_ReturnUrl: returnUrl,
+      vnp_IpAddr: ipAddress,
+      vnp_CreateDate: createDate,
+    };
+
+    const signedPayload = this.stringifyVnpayParams(params);
+    const secureHash = crypto
+      .createHmac('sha512', hashSecret)
+      .update(Buffer.from(signedPayload, 'utf-8'))
+      .digest('hex');
+
+    return `${paymentUrl}?${signedPayload}&vnp_SecureHash=${secureHash}`;
+  }
+
+  private verifyVnpaySecureHash(params: Record<string, string>) {
+    const hashSecret = this.configService.get<string>('VNPAY_HASH_SECRET');
+    if (!hashSecret) {
+      throw new BadRequestException(
+        'Chua cau hinh VNPAY_HASH_SECRET tren backend.',
+      );
+    }
+
+    const secureHash = params.vnp_SecureHash;
+    if (!secureHash) return false;
+
+    const signedParams = { ...params };
+    delete signedParams.vnp_SecureHash;
+    delete signedParams.vnp_SecureHashType;
+    const signedPayload = this.stringifyVnpayParams(signedParams);
+    const expectedHash = crypto
+      .createHmac('sha512', hashSecret)
+      .update(Buffer.from(signedPayload, 'utf-8'))
+      .digest('hex');
+
+    return expectedHash.toLowerCase() === secureHash.toLowerCase();
+  }
+
+  private stringifyVnpayParams(params: Record<string, string | number>) {
+    return Object.keys(params)
+      .sort()
+      .map((key) => `${key}=${encodeURIComponent(String(params[key])).replace(/%20/g, '+')}`)
+      .join('&');
+  }
+
+  private normalizeVnpayQuery(query: VnpayReturnQuery) {
+    return Object.entries(query).reduce<Record<string, string>>(
+      (acc, [key, value]) => {
+        if (Array.isArray(value)) {
+          acc[key] = value[0] ?? '';
+        } else if (typeof value === 'string') {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {},
+    );
+  }
+
+  private encodeVnpayTxnRef(orderId: string) {
+    return orderId.replace('#', '').replace('-', '');
+  }
+
+  private decodeVnpayTxnRef(txnRef?: string) {
+    const digits = txnRef?.replace(/^BB/i, '');
+    if (!digits) {
+      throw new BadRequestException('VNPAY thieu ma don hang.');
+    }
+    return `#BB-${digits}`;
+  }
+
+  private formatVnpayDate(date: Date) {
+    const pad = (value: number) => value.toString().padStart(2, '0');
+    return (
+      date.getFullYear().toString() +
+      pad(date.getMonth() + 1) +
+      pad(date.getDate()) +
+      pad(date.getHours()) +
+      pad(date.getMinutes()) +
+      pad(date.getSeconds())
+    );
+  }
+
+  private async getBackendBaseUrl() {
+    const localUrl =
+      this.configService.get<string>('LOCAL_BACKEND_URL') ||
+      `http://localhost:${this.configService.get<string>('PORT') || '3000'}`;
+    const deployUrl =
+      this.configService.get<string>('BACKEND_PUBLIC_URL') ||
+      this.configService.get<string>('API_PUBLIC_URL') ||
+      'https://coffee-shop-backend-bmh9.onrender.com';
+
+    return (await this.isUrlReachable(localUrl)) ? localUrl : deployUrl;
+  }
+
+  private async isUrlReachable(url: string) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 700);
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        signal: controller.signal,
+      });
+      return response.status < 500;
+    } catch {
+      return false;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   private createZaloPayPayment(order: {

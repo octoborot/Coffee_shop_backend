@@ -31,6 +31,7 @@ enum OrderType {
 
 enum OrderStatus {
   New
+  Accepted
   Preparing
   Delivering
   Delivered
@@ -41,6 +42,7 @@ enum PaymentMethod {
   CASH
   BANK_TRANSFER
   ZALOPAY
+  VNPAY
 }
 
 enum PaymentStatus {
